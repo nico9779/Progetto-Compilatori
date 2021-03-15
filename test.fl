@@ -1,0 +1,53 @@
+%{
+#include <stdio.h>
+%}
+
+ws					[ \t\r\n]
+digit				[0123456789]
+letter				[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]
+
+
+id					("_"|{letter})("_"|{digit}|{letter})*
+int_number			("+"|"-")?{digit}+
+
+%%
+
+{ws}+
+
+";"					{ printf("SEMICOLON \";\"\n"); }
+
+"("					{ printf("OPEN ROUND BRACKET \"(\"\n"); }
+")"					{ printf("CLOSE ROUND BRACKET \")\"\n"); }
+"{"					{ printf("OPEN CURLY BRACKET \"{\"\n"); }
+"}"					{ printf("CLOSE CURLY BRACKET \"}\"\n"); }
+
+"+"					{ printf("OPERATOR \"+\"\n"); }
+"-"					{ printf("OPERATOR \"-\"\n"); }
+"*"					{ printf("OPERATOR \"*\"\n"); }
+"/"					{ printf("OPERATOR \"/\"\n"); }
+
+"&"					{ printf("OPERATOR \"&\"\n"); }
+"|"					{ printf("OPERATOR \"|\"\n"); }
+"^"					{ printf("OPERATOR \"^\"\n"); }
+
+"="					{ printf("OPERATOR \"=\"\n"); }
+
+"<"					{ printf("OPERATOR \"<\"\n"); }
+"<="				{ printf("OPERATOR \"<=\"\n"); }
+"=="				{ printf("OPERATOR \"==\"\n"); }
+">="				{ printf("OPERATOR \">=\"\n"); }
+">"					{ printf("OPERATOR \">\"\n"); }
+
+else				{ printf("KEYWORD ELSE\n"); }
+for					{ printf("KEYWORD FOR\n"); }
+if					{ printf("KEYWORD IF\n"); }
+int					{ printf("KEYWORD INT\n"); }
+return				{ printf("KEYWORD RETURN\n"); }
+while				{ printf("KEYWORD WHILE\n"); }
+
+{id}				{ printf("ID: %s\n", yytext); }
+{int_number}		{ printf("INT NUMBER: %s\n", yytext); }
+
+.					{ printf("UNRECOGNISED: %s\n", yytext); }
+
+%%
