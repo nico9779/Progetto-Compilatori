@@ -1,0 +1,36 @@
+%{
+#include <stdio.h>
+%}
+
+delim [ \t\n]
+ws {delim}+
+letter [A-Za-z]
+digit [0-9]
+
+id {letter}({letter}|{digit})*
+number ("+"|"-")?{digit}+
+
+%%
+
+{ws} {}     /* eat up whitespaces */
+
+if|then|else|do|while|for|int {printf("<%s,>\n", yytext);}
+
+{id} {printf("<id, %s>\n", yytext);}
+{number} {printf("<number, %s>\n", yytext);}
+
+"//"[^\n]* {}    /* eat up one-line comments */
+"/*"[^"*/"]*"*/" {}   /* eat up multi-line comments */
+
+\"[^\"]*\" {printf("<string, %s>\n", yytext);}
+
+"=" {printf("<assignment,>\n");}
+
+"<" {printf("<relop, LT>\n");}
+"<=" {printf("<relop, LE>\n");}
+"==" {printf("<relop, EQ>\n");}
+">" {printf("<relop, GT>\n");}
+">=" {printf("<relop, GE>\n");}
+
+. {printf("<unknown, %s>\n", yytext);}
+%%
