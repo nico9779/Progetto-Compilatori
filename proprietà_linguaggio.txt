@@ -1,0 +1,5 @@
+Proprietà del linguaggio:
+
+1) "print" anzichè "printf"
+2) "and", "or" e "not" anzichè && e || e !
+3) stringhe comprese anche tra apici ('')

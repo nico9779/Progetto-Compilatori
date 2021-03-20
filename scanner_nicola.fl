@@ -2,35 +2,69 @@
 #include <stdio.h>
 %}
 
-delim [ \t\n]
-ws {delim}+
-letter [A-Za-z]
-digit [0-9]
+delim                   [ \t\n]
+ws                      {delim}+
+letter                  [A-Za-z]
+digit                   [0-9]
 
-id {letter}({letter}|{digit})*
-number ("+"|"-")?{digit}+
+id                      {letter}({letter}|{digit})*
+number                  {digit}+
 
 %%
 
-{ws} {}     /* eat up whitespaces */
+{ws}                    {}     /* eat up whitespaces */
 
-if|then|else|do|while|for|int {printf("<%s,>\n", yytext);}
+if                      { printf("<keyword, IF>\n"); }
+else                    { printf("<keyword, ELSE>\n"); }
+do                      { printf("<keyword, DO>\n"); }
+while                   { printf("<keyword, WHILE>\n"); }
+for                     { printf("<keyword, FOR>\n"); }
+int                     { printf("<keyword, INT>\n"); }
+return                  { printf("<keyword, RETURN>\n"); }
 
-{id} {printf("<id, %s>\n", yytext);}
-{number} {printf("<number, %s>\n", yytext);}
+"//"[^\n]*              {}   /* eat up one-line comments */
+"/*"[^"*/"]*"*/"        {}   /* eat up multi-line comments */
 
-"//"[^\n]* {}    /* eat up one-line comments */
-"/*"[^"*/"]*"*/" {}   /* eat up multi-line comments */
+["][^\"]*["]            { printf("<string, %s>\n", yytext); }     /* strings delimited by ""  */
+['][^\']*[']            { printf("<string, %s>\n", yytext); }     /* strings delimited by ''  */
 
-\"[^\"]*\" {printf("<string, %s>\n", yytext);}
+"<"                     { printf("<operator, LT>\n"); }
+"<="                    { printf("<operator, LE>\n"); }
+"=="                    { printf("<operator, EQ>\n"); }
+"!="                    { printf("<operator, NEQ>\n"); }
+">"                     { printf("<operator, GT>\n"); }
+">="                    { printf("<operator, GE>\n"); }
 
-"=" {printf("<assignment,>\n");}
+"+"	                    { printf("<operator, ADDITION>\n"); }
+"-"	                    { printf("<operator, SUBTRACTION>\n"); }
+"*"	                    { printf("<operator, MULTIPLICATION>\n"); }
+"/"	                    { printf("<operator, DIVISION>\n"); }
+"%"                     { printf("<operator, MODULO>\n"); }
 
-"<" {printf("<relop, LT>\n");}
-"<=" {printf("<relop, LE>\n");}
-"==" {printf("<relop, EQ>\n");}
-">" {printf("<relop, GT>\n");}
-">=" {printf("<relop, GE>\n");}
+"="                     { printf("<operator, ASSIGNMENT>\n"); }
 
-. {printf("<unknown, %s>\n", yytext);}
+"and"|"AND"             { printf("<operator, AND>\n"); }
+"or"|"OR"               { printf("<operator, OR>\n"); }
+"not"|"NOT"             { printf("<operator, NOT>\n"); }
+
+"&"					    { printf("<operator, BITWISE AND>\n"); }
+"|"					    { printf("<operator, BITWISE OR>\n"); }
+"^"					    { printf("<operator, BITWISE XOR>\n"); }
+"~"                     { printf("<operator, UNARY COMPLEMENT>\n"); }
+"<<"                    { printf("<operator, SHIFT LEFT>\n"); }
+">>"                    { printf("<operator, SHIFT RIGHT>\n"); }
+
+"("	                    { printf("<bracket, OPEN ROUND BRACKET>\n"); }
+")"	                    { printf("<bracket, CLOSE ROUND BRACKET>\n"); }
+"{"	                    { printf("<bracket, OPEN CURLY BRACKET>\n"); }
+"}"	                    { printf("<bracket, CLOSE CURLY BRACKET>\n"); }
+
+";"	                    { printf("<semicolon, >\n"); }
+","                     { printf("<comma, >\n"); }
+":"                     { printf("<colon, >\n"); }
+
+{id}                    { printf("<id, %s>\n", yytext); }
+{number}                { printf("<number, %s>\n", yytext); }
+.                       { printf("<unrecognized, %s>\n", yytext); }
+
 %%
