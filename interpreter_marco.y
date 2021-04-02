@@ -19,8 +19,8 @@ void yyerror(char* str);
 %token BR_ROUND_OPEN
 %token BR_ROUND_CLOSE
 
-%left OP_MUL OP_DIV
 %left OP_ADD OP_SUB
+%left OP_MUL OP_DIV
 %right OP_UMINUS
 
 %%
