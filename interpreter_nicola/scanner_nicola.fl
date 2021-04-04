@@ -1,5 +1,9 @@
+%option noyywrap
 %{
 #include <stdio.h>
+#include "interpreter_nicola.tab.h"
+
+extern YYSTYPE yylval;
 %}
 
 delim                   [ \t\n]
@@ -35,10 +39,10 @@ return                  { printf("<keyword, RETURN>\n"); }
 ">"                     { printf("<operator, GT>\n"); }
 ">="                    { printf("<operator, GE>\n"); }
 
-"+"	                    { printf("<operator, ADDITION>\n"); }
-"-"	                    { printf("<operator, SUBTRACTION>\n"); }
-"*"	                    { printf("<operator, MULTIPLICATION>\n"); }
-"/"	                    { printf("<operator, DIVISION>\n"); }
+"+"	                    { printf("<operator, ADDITION>\n"); return OP_ADD;}
+"-"	                    { printf("<operator, SUBTRACTION>\n"); return OP_SUB;}
+"*"	                    { printf("<operator, MULTIPLICATION>\n"); return OP_MUL;}
+"/"	                    { printf("<operator, DIVISION>\n"); return OP_DIV;}
 "%"                     { printf("<operator, MODULO>\n"); }
 
 "="                     { printf("<operator, ASSIGNMENT>\n"); }
@@ -54,17 +58,21 @@ return                  { printf("<keyword, RETURN>\n"); }
 "<<"                    { printf("<operator, SHIFT LEFT>\n"); }
 ">>"                    { printf("<operator, SHIFT RIGHT>\n"); }
 
-"("	                    { printf("<bracket, OPEN ROUND BRACKET>\n"); }
-")"	                    { printf("<bracket, CLOSE ROUND BRACKET>\n"); }
+"("	                    { printf("<bracket, OPEN ROUND BRACKET>\n"); return BR_ROUND_OPEN;}
+")"	                    { printf("<bracket, CLOSE ROUND BRACKET>\n"); return BR_ROUND_CLOSE;}
 "{"	                    { printf("<bracket, OPEN CURLY BRACKET>\n"); }
 "}"	                    { printf("<bracket, CLOSE CURLY BRACKET>\n"); }
 
-";"	                    { printf("<semicolon, >\n"); }
+";"	                    { printf("<semicolon, >\n"); return SEMICOLON;}
 ","                     { printf("<comma, >\n"); }
 ":"                     { printf("<colon, >\n"); }
 
 {id}                    { printf("<id, %s>\n", yytext); }
-{number}                { printf("<number, %s>\n", yytext); }
-.                       { printf("<unrecognized, %s>\n", yytext); }
+{number}                {
+							sscanf(yytext, "%d", &yylval); 
+							printf("<number, %s>\n", yytext); 
+						    return NUMBER;
+						}
+.                       { printf("<unrecognized, %s>\n", yytext); return yytext[0];}
 
 %%
