@@ -18,8 +18,40 @@ number                  {digit}+\.?{digit}*
 
 %%
 
+	/* ******************** PUNCTUATORS ******************** */
+
+";"						{
+							#ifdef PROJECT_LOGGING
+								printf("F<PT_SEMICOLON>\n");
+							#endif
+
+							return PT_SEMICOLON;
+						}
+
+	/* ******************** KEYWORDS ******************** */
+
+"false"					{
+							#ifdef PROJECT_LOGGING
+								printf("F<KW_FALSE>\n");
+							#endif
+
+							return KW_FALSE;
+						}
+
+"true"					{
+							#ifdef PROJECT_LOGGING
+								printf("F<KW_TRUE>\n");
+							#endif
+
+							return KW_TRUE;
+						}
+
+	/* ******************** WHITESPACES ******************** */
+
 "\n"					{ return yytext[0]; }
 {ws}                    {}     /* eat up whitespaces */
+
+	/* ******************** BRACKETS ******************** */
 
 "("	                    {
 							#ifdef PROJECT_LOGGING
@@ -28,6 +60,7 @@ number                  {digit}+\.?{digit}*
 
 							return BR_ROUND_OPEN;
 						}
+
 ")"	                    {
 							#ifdef PROJECT_LOGGING
 								printf("F<BR_ROUND_CLOSE>\n");
@@ -35,6 +68,9 @@ number                  {digit}+\.?{digit}*
 
 							return BR_ROUND_CLOSE;
 						}
+
+	/* ******************** ARITHMETIC OPERATORS ******************** */
+
 "+"	                    {
 							#ifdef PROJECT_LOGGING
 								printf("F<OP_ADD>\n");
@@ -42,6 +78,7 @@ number                  {digit}+\.?{digit}*
 
 							return OP_ADD;
 						}
+
 "-"	                    {
 							#ifdef PROJECT_LOGGING
 								printf("F<OP_SUB>\n");
@@ -49,6 +86,7 @@ number                  {digit}+\.?{digit}*
 
 							return OP_SUB;
 						}
+
 "*"	                    {
 							#ifdef PROJECT_LOGGING
 								printf("F<OP_MUL>\n");
@@ -56,6 +94,7 @@ number                  {digit}+\.?{digit}*
 
 							return OP_MUL;
 						}
+
 "/"	                    {
 							#ifdef PROJECT_LOGGING
 								printf("F<OP_DIV>\n");
@@ -63,6 +102,92 @@ number                  {digit}+\.?{digit}*
 
 							return OP_DIV;
 						}
+
+	/* ******************** RELATIONAL OPERATORS ******************** */
+
+"<"	                    {
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_LT>\n");
+							#endif
+
+							return OP_LT;
+						}
+
+"<="	                {
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_LE>\n");
+							#endif
+
+							return OP_LE;
+						}
+
+"=="	            	{
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_EQ>\n");
+							#endif
+
+							return OP_EQ;
+						}
+
+"!="	             	{
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_NE>\n");
+							#endif
+
+							return OP_NE;
+						}
+
+">"	                    {
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_GT>\n");
+							#endif
+
+							return OP_GT;
+						}
+
+">="	               	{
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_GE>\n");
+							#endif
+
+							return OP_GE;
+						}
+
+	/* ******************** LOGICAL OPERATORS ******************** */
+
+"and"	              	{
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_AND>\n");
+							#endif
+
+							return OP_AND;
+						}
+
+"or"	              	{
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_OR>\n");
+							#endif
+
+							return OP_OR;
+						}
+
+"xor"	            	{
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_XOR>\n");
+							#endif
+
+							return OP_XOR;
+						}
+
+"not"	               	{
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_NOT>\n");
+							#endif
+
+							return OP_NOT;
+						}
+
+	/* ******************** OTHERS ******************** */
 
 {number}                {
 							sscanf(yytext, "%lf", &yylval);
@@ -73,5 +198,6 @@ number                  {digit}+\.?{digit}*
 
 							return NUMBER;
 						}
+
 
 %%
