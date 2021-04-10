@@ -99,37 +99,37 @@ bool_expr		:	bool_expr OP_AND bool_expr					{
 				|	BR_ROUND_OPEN bool_expr BR_ROUND_CLOSE		{ 
 																	$$ = $2;
 																}
-				|	int_expr OP_LT int_expr								{  
+				|	int_expr OP_LT int_expr						{  
 																	if($1 < $3)
 																		$$ = 1;
 																	else
 																		$$ = 0;
 																}
-				|	int_expr OP_LE int_expr								{  
+				|	int_expr OP_LE int_expr						{  
 																	if($1 <= $3)
 																		$$ = 1;
 																	else
 																		$$ = 0;
 																}
-				|	int_expr OP_GE int_expr								{  
+				|	int_expr OP_GE int_expr						{  
 																	if($1 >= $3)
 																		$$ = 1;
 																	else
 																		$$ = 0;
 																}
-				|	int_expr OP_GT int_expr								{  
+				|	int_expr OP_GT int_expr						{  
 																	if($1 > $3)
 																		$$ = 1;
 																	else
 																		$$ = 0;
 																}	
-				|	int_expr OP_EQ int_expr								{  
+				|	int_expr OP_EQ int_expr						{  
 																	if($1 == $3)
 																		$$ = 1;
 																	else
 																		$$ = 0;
 																}
-				|	int_expr OP_NEQ int_expr								{  
+				|	int_expr OP_NEQ int_expr					{  
 																	if($1 != $3)
 																		$$ = 1;
 																	else
