@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+/* Deccoment the line below to enable logging. */
 /*#define PROJECT_LOGGING*/
 
 #define YYSTYPE double
