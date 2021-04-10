@@ -21,17 +21,56 @@ number                  {digit}+\.?{digit}*
 "\n"					{ return yytext[0]; }
 {ws}                    {}     /* eat up whitespaces */
 
-"("	                    { printf("F<BR_ROUND_OPEN>\n"); return BR_ROUND_OPEN; }
-")"	                    { printf("F<BR_ROUND_CLOSE>\n"); return BR_ROUND_CLOSE; }
+"("	                    {
+							#ifdef PROJECT_LOGGING
+								printf("F<BR_ROUND_OPEN>\n");
+							#endif
 
-"+"	                    { printf("F<OP_ADD>\n"); return OP_ADD; }
-"-"	                    { printf("F<OP_SUB>\n"); return OP_SUB; }
-"*"	                    { printf("F<OP_MUL>\n"); return OP_MUL; }
-"/"	                    { printf("F<OP_DIV>\n"); return OP_DIV; }
+							return BR_ROUND_OPEN;
+						}
+")"	                    {
+							#ifdef PROJECT_LOGGING
+								printf("F<BR_ROUND_CLOSE>\n");
+							#endif
+
+							return BR_ROUND_CLOSE;
+						}
+"+"	                    {
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_ADD>\n");
+							#endif
+
+							return OP_ADD;
+						}
+"-"	                    {
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_SUB>\n");
+							#endif
+
+							return OP_SUB;
+						}
+"*"	                    {
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_MUL>\n");
+							#endif
+
+							return OP_MUL;
+						}
+"/"	                    {
+							#ifdef PROJECT_LOGGING
+								printf("F<OP_DIV>\n");
+							#endif
+
+							return OP_DIV;
+						}
 
 {number}                {
 							sscanf(yytext, "%lf", &yylval);
-							printf("F<NUMBER, %s>\n", yytext);
+
+							#ifdef PROJECT_LOGGING
+								printf("F<NUMBER, %s>\n", yytext);
+							#endif
+
 							return NUMBER;
 						}
 

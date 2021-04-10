@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+/*#define PROJECT_LOGGING*/
+
 #define YYSTYPE double
 
 int yylex();
@@ -30,16 +32,61 @@ lines			:	lines expr '\n'						{ printf("%lf\n", $2); }
 				|
 				;
 
-expr			:	expr OP_MUL expr					{ $$ = $1 * $3; printf("B<expr: expr OP_MUL expr, %lf>\n", $$); }
-				|	expr OP_DIV expr					{ $$ = $1 / $3; printf("B<expr: expr OP_DIV expr, %lf>\n", $$); }
-				|	expr OP_ADD expr					{ $$ = $1 + $3; printf("B<expr: expr OP_ADD expr, %lf>\n", $$); }
-				|	expr OP_SUB expr					{ $$ = $1 - $3; printf("B<expr: expr OP_SUB expr, %lf>\n", $$); }
+expr			:	expr OP_MUL expr					{
+															$$ = $1 * $3;
+															
+															#ifdef PROJECT_LOGGING
+																printf("B<expr: expr OP_MUL expr, %lf>\n", $$);
+															#endif
+														}
 
-				|	BR_ROUND_OPEN expr BR_ROUND_CLOSE	{ $$ = $2; printf("B<expr: BR_ROUND_OPEN expr BR_ROUND_CLOSE, %lf>\n", $$); }
+				|	expr OP_DIV expr					{
+															$$ = $1 / $3;
+															
+															#ifdef PROJECT_LOGGING
+																printf("B<expr: expr OP_DIV expr, %lf>\n", $$);
+															#endif
+														}
 
-				|	OP_SUB expr %prec OP_UMINUS			{ $$ = -$2; printf("B<expr: OP_SUB expr, %lf>\n", $$); }
+				|	expr OP_ADD expr					{
+															$$ = $1 + $3;
+															
+															#ifdef PROJECT_LOGGING
+																printf("B<expr: expr OP_ADD expr, %lf>\n", $$);
+															#endif
+														}
 
-				|	NUMBER								{ $$ = yylval; printf("B<expr: NUMBER, %lf>\n", $$); }
+				|	expr OP_SUB expr					{
+															$$ = $1 - $3;
+															
+															#ifdef PROJECT_LOGGING
+																printf("B<expr: expr OP_SUB expr, %lf>\n", $$);
+															#endif
+														}
+
+				|	BR_ROUND_OPEN expr BR_ROUND_CLOSE	{
+															$$ = $2;
+															
+															#ifdef PROJECT_LOGGING
+																printf("B<expr: BR_ROUND_OPEN expr BR_ROUND_CLOSE, %lf>\n", $$);
+															#endif
+														}
+
+				|	OP_SUB expr %prec OP_UMINUS			{
+															$$ = -$2;
+															
+															#ifdef PROJECT_LOGGING
+																printf("B<expr: OP_SUB expr, %lf>\n", $$);
+															#endif
+														}
+
+				|	NUMBER								{
+															$$ = yylval;
+															
+															#ifdef PROJECT_LOGGING
+																printf("B<expr: NUMBER, %lf>\n", $$);
+															#endif
+														}
 				;
 
 %%
