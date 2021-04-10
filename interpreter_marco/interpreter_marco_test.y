@@ -1,11 +1,10 @@
 %{
 
 /* Deccoment the line below to enable logging. */
-/*#define PROJECT_LOGGING*/
+//#define PROJECT_LOGGING
 
 #include <stdio.h>
-
-#define YYSTYPE double
+#include <stdlib.h>
 
 int yylex();
 void yyerror(char* str);
@@ -13,13 +12,20 @@ void yyerror(char* str);
 %}
 
 
+%union
+{
+	double f_val;
+	char* s_val;
+}
+
+
 /* *** PUNCTUATORS *** */
 %token PT_SEMICOLON
 
 /* *** KEYWORDS *** */
-%token KW_FALSE
+%token <f_val> KW_FALSE
 %token KW_PRINT
-%token KW_TRUE
+%token <f_val> KW_TRUE
 
 /* *** BRACKETS *** */
 %token BR_ROUND_OPEN
@@ -49,8 +55,13 @@ void yyerror(char* str);
 %token OP_NOT
 
 /* *** OTHERS *** */
-%token NUMBER
-%token STRING
+%token <f_val> NUMBER
+%token <s_val> STRING
+
+
+%type <f_val> float_expr
+%type <f_val> bool_expr
+%type <s_val> string_expr
 
 
 %left OP_ADD OP_SUB
@@ -69,9 +80,9 @@ void yyerror(char* str);
 
 lines			:	lines KW_PRINT float_expr PT_SEMICOLON		{ printf("%lf\n", $3); }
 				|	lines KW_PRINT bool_expr PT_SEMICOLON		{ printf("%s\n", (($3 == 0.0) ? "false" : "true")); }
+				|	lines KW_PRINT string_expr PT_SEMICOLON		{ printf("%s\n", $3); free($3); $3 = NULL; }
 				|	lines float_expr PT_SEMICOLON				{ printf("%lf\n", $2); }
 				|	lines bool_expr PT_SEMICOLON				{ printf("%s\n", (($2 == 0.0) ? "false" : "true")); }
-				|	lines '\n'
 				|
 				;
 
@@ -125,7 +136,7 @@ float_expr		:	float_expr OP_MUL float_expr				{
 																}
 
 				|	NUMBER										{
-																	$$ = yylval;
+																	$$ = yylval.f_val;
 
 																	#ifdef PROJECT_LOGGING
 																		printf("B<float_expr: NUMBER, %lf>\n", $$);
@@ -270,6 +281,15 @@ bool_expr		:	bool_expr OP_AND bool_expr					{
 																}
 
 				;
+
+
+string_expr		:	STRING										{
+																	$$ = yylval.s_val;
+
+																	#ifdef PROJECT_LOGGING
+																		printf("B<string_expr: STRING, %s>\n", $$);
+																	#endif
+																}
 
 
 %%

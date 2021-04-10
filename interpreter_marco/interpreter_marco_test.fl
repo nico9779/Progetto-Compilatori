@@ -1,13 +1,14 @@
+%option c++
 %option noyywrap
 %{
 
 /* Deccoment the line below to enable logging. */
-/*#define PROJECT_LOGGING*/
+//#define PROJECT_LOGGING
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "interpreter_marco.tab.h"
+#include "interpreter_marco_test.tab.h"
 
 extern YYSTYPE yylval;
 
@@ -25,20 +26,6 @@ number                  	{digit}+\.?{digit}*
 	/* ******************** WHITESPACES ******************** */
 
 {ws}                    	{}     /* eat up whitespaces */
-
-	/* ******************** STRING LITERALS ******************** */
-
-["][^\"]*["]|['][^\']*[']	{
-								/* Allocate heap memory to store the string, and put the pointer in yylval. */
-								//yylval = malloc(yyleng);
-								//memcpy(yylval, yytext, yyleng);
-
-								#ifdef PROJECT_LOGGING
-									printf("F<STRING, %s>\n", yytext);
-								#endif
-
-								return STRING;
-							}
 
 	/* ******************** PUNCTUATORS ******************** */
 
@@ -225,13 +212,26 @@ number                  	{digit}+\.?{digit}*
 	/* ******************** OTHERS ******************** */
 
 {number}               		{
-								sscanf(yytext, "%lf", &yylval);
+								sscanf(yytext, "%lf", &yylval.f_val);
 
 								#ifdef PROJECT_LOGGING
 									printf("F<NUMBER, %s>\n", yytext);
 								#endif
 
 								return NUMBER;
+							}
+
+["][^\"]*["]|['][^\']*[']	{
+								/* Allocate heap memory to store the string, and put the pointer in yylval. */
+								yylval.s_val = (char*) malloc(yyleng - 1);
+								memcpy(yylval.s_val, yytext + 1, yyleng - 2);
+								yylval.s_val[yyleng - 2] = 0;
+
+								#ifdef PROJECT_LOGGING
+									printf("F<STRING, %s>\n", yylval.s_val);
+								#endif
+
+								return STRING;
 							}
 
 
