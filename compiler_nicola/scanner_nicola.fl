@@ -2,6 +2,7 @@
 
 %{
 #include <stdio.h>
+#include <string.h>
 #include "compiler_nicola.tab.h"
 %}
 
@@ -72,7 +73,7 @@ return                  { printf("<keyword, RETURN>\n"); }
 
 {id}                    { printf("<id, %s>\n", yytext); }
 {number}                {
-							sscanf(yytext, "%d", &yylval.address.value); 
+							yylval.address.addr = strdup(yytext);
 							printf("<number, %s>\n", yytext); 
 						    return NUMBER;
 						}

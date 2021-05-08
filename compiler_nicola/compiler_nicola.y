@@ -1,7 +1,6 @@
 %{
 
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
 
 int yylex();
@@ -20,9 +19,8 @@ char* next_var(){
 
 %union{
     struct address {
-        int value;
         char* addr;
-    } address; 
+    } address;
 }
 
 %token <address> NUMBER
@@ -67,8 +65,8 @@ char* next_var(){
 
 %%
 
-line			:	line bool_expr SEMICOLON					{ }
-				|	line int_expr SEMICOLON						{ }
+line			:	line bool_expr SEMICOLON					{ printf("\n"); }
+				|	line int_expr SEMICOLON						{ printf("\n"); }
 				|
 				;
 
@@ -103,7 +101,7 @@ bool_expr		:	bool_expr OP_AND bool_expr					{
                                                                     $$.addr = strdup(temp);  
 																}
 				|	BR_ROUND_OPEN bool_expr BR_ROUND_CLOSE		{ 
-																	$$.addr = $2.addr;
+																	$$.addr = strdup($2.addr);
 																}
 				|	int_expr OP_LT int_expr						{  
 																	char* temp = next_var();
@@ -168,7 +166,7 @@ int_expr		:	int_expr OP_MUL int_expr					{
                                                                     $$.addr = strdup(temp); 
                                                                 }
 
-				|	BR_ROUND_OPEN int_expr BR_ROUND_CLOSE		{ $$.addr = $2.addr; }
+				|	BR_ROUND_OPEN int_expr BR_ROUND_CLOSE		{ $$.addr = strdup($2.addr); }
 
 				|	OP_SUB int_expr %prec OP_UMINUS				{ 
                                                                     char* temp = next_var();
@@ -178,12 +176,12 @@ int_expr		:	int_expr OP_MUL int_expr					{
 
 				|	OP_ADD	NUMBER								{ 
                                                                     char* temp = next_var();
-                                                                    printf("%s = %d\n", temp, yylval.address.value);
+                                                                    printf("%s = %s\n", temp, $1.addr);
                                                                     $$.addr = strdup(temp); 
                                                                 }
 				|	NUMBER										{   
                                                                     char* temp = next_var();
-                                                                    printf("%s = %d\n", temp, yylval.address.value);
+                                                                    printf("%s = %s\n", temp, $1.addr);
                                                                     $$.addr = strdup(temp); 
                                                                 }
 				;
