@@ -1,0 +1,45 @@
+true;
+false;
+
+not true;
+not false;
+
+true and true;
+true and false;
+false and true;
+false and false;
+
+true or true;
+true or false;
+false or true;
+false or false;
+
+true xor true;
+true xor false;
+false xor true;
+false xor false;
+
+true == true;
+true == false;
+false == true;
+false == false;
+
+true != true;
+true != false;
+false != true;
+false != false;
+
+1.0 < 1.0;
+1.0 <= 1.0;
+1.0 == 1.0;
+1.0 != 1.0;
+1.0 > 1.0;
+1.0 >= 1.0;
+
+
+-2.3+(3*4)-5.12;
+((-1.23)*-2.54)+0.97;
+
+print "hello world!";
+print 34.56;
+print ((-1.23)*-2.54)+0.97<=4;
