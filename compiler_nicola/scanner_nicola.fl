@@ -23,8 +23,9 @@ else                    { printf("<keyword, ELSE>\n"); }
 do                      { printf("<keyword, DO>\n"); }
 while                   { printf("<keyword, WHILE>\n"); }
 for                     { printf("<keyword, FOR>\n"); }
-int                     { printf("<keyword, INT>\n"); }
+int                     { printf("<keyword, INT>\n"); return KW_INT; }
 return                  { printf("<keyword, RETURN>\n"); }
+print					{ printf("<keyword, PRINT>\n"); return KW_PRINT; }
 
 "true"|"TRUE"			{ printf("<keyword, TRUE>\n"); return KW_TRUE; }
 "false"|"FALSE"			{ printf("<keyword, FALSE>\n"); return KW_FALSE; }
@@ -48,7 +49,7 @@ return                  { printf("<keyword, RETURN>\n"); }
 "/"	                    { printf("<operator, DIVISION>\n"); return OP_DIV;}
 "%"                     { printf("<operator, MODULO>\n"); }
 
-"="                     { printf("<operator, ASSIGNMENT>\n"); }
+"="                     { printf("<operator, ASSIGNMENT>\n"); return OP_ASSIGN; }
 
 "and"|"AND"             { printf("<operator, AND>\n"); return OP_AND; }
 "or"|"OR"               { printf("<operator, OR>\n"); return OP_OR; }
@@ -71,12 +72,19 @@ return                  { printf("<keyword, RETURN>\n"); }
 ","                     { printf("<comma, >\n"); }
 ":"                     { printf("<colon, >\n"); }
 
-{id}                    { printf("<id, %s>\n", yytext); }
+{id}                    { 
+							yylval.address.addr = strdup(yytext);
+							printf("<id, %s>\n", yytext); 
+							return ID;
+						}
 {number}                {
 							yylval.address.addr = strdup(yytext);
 							printf("<number, %s>\n", yytext); 
 						    return NUMBER;
 						}
-.                       { printf("<unrecognized, %s>\n", yytext); return yytext[0];}
+.                       { 
+							printf("<unrecognized, %s>\n", yytext); 
+							return yytext[0];
+						}
 
 %%

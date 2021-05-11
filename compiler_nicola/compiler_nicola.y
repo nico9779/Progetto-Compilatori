@@ -2,17 +2,69 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+#include "uthash.h"
 
 int yylex();
 void yyerror(char* str);
 
 int counter = 1;
 
-char* next_var(){
+char* next_var() {
     static char s[5];
     sprintf(s, "t%d", counter);
     counter++;
     return s;
+}
+
+typedef struct variable {
+    const char* id;  // hash key
+    char* addr;      // address of the value stored in the variable
+    UT_hash_handle hh;
+} variable;
+
+variable* symbolTable = NULL;
+
+// Add variable to symbol table
+void addVar(char* id) {
+    variable* tmp;
+    HASH_FIND_STR(symbolTable, id, tmp);
+
+    if(tmp == NULL) {
+        tmp = (variable*) malloc(sizeof(variable));
+        tmp->id = id;
+        tmp->addr = strdup("0");
+        HASH_ADD_KEYPTR(hh, symbolTable, tmp->id, strlen(tmp->id), tmp);
+    } else {
+        printf("ERROR: multiple definition for variable %s\n", id);
+        exit(-1);
+    }
+}
+
+// Set address of a variable "id" in the symbol table
+void setVar(char* id, char* addr){
+    variable* tmp;
+    HASH_FIND_STR(symbolTable, id, tmp);
+
+    if(tmp == NULL) {
+        printf("ERROR: variable %s is not defined\n", id);
+        exit(-1);
+    }
+
+    tmp->addr = addr;
+}
+
+// Get address of a variable "id" in the symbol table
+char* getVar(char* id){
+    variable* tmp;
+    HASH_FIND_STR(symbolTable, id, tmp);
+
+    if(tmp == NULL) {
+        printf("ERROR: variable %s is not defined\n", id);
+        exit(-1);
+    }
+
+    return tmp->addr;
 }
 
 %}
@@ -24,31 +76,36 @@ char* next_var(){
 }
 
 %token <address> NUMBER
+%token <address> ID
 
-%token <address> KW_FALSE
-%token <address> KW_TRUE
+%token KW_INT
+%token KW_PRINT
+%token KW_FALSE
+%token KW_TRUE
 
-%token <address> OP_ADD
-%token <address> OP_SUB
-%token <address> OP_MUL
-%token <address> OP_DIV
+%token OP_ADD
+%token OP_SUB
+%token OP_MUL
+%token OP_DIV
 
-%token <address> OP_LT
-%token <address> OP_LE
-%token <address> OP_EQ
-%token <address> OP_NEQ
-%token <address> OP_GT
-%token <address> OP_GE
+%token OP_LT
+%token OP_LE
+%token OP_EQ
+%token OP_NEQ
+%token OP_GT
+%token OP_GE
 
-%token <address> OP_AND
-%token <address> OP_OR
-%token <address> OP_XOR
-%token <address> OP_NOT
+%token OP_AND
+%token OP_OR
+%token OP_XOR
+%token OP_NOT
 
-%token <address> BR_ROUND_OPEN
-%token <address> BR_ROUND_CLOSE
+%token OP_ASSIGN
 
-%token <address> SEMICOLON
+%token BR_ROUND_OPEN
+%token BR_ROUND_CLOSE
+
+%token SEMICOLON
 
 %type <address> bool_expr
 %type <address> int_expr
@@ -65,10 +122,21 @@ char* next_var(){
 
 %%
 
-line			:	line bool_expr SEMICOLON					{ printf("\n"); }
-				|	line int_expr SEMICOLON						{ printf("\n"); }
+program			:	program stmt SEMICOLON					    { printf("\n"); }
 				|
 				;
+
+stmt            :   KW_INT ID                                   { 
+                                                                    addVar($2.addr);
+                                                                    printf("int %s\n", $2.addr); 
+                                                                }
+                |   ID OP_ASSIGN int_expr                       { 
+                                                                    setVar($1.addr, $3.addr);
+                                                                    printf("%s = %s\n", $1.addr, $3.addr); 
+                                                                }
+                |   KW_PRINT BR_ROUND_OPEN ID BR_ROUND_CLOSE    {
+                                                                    printf("%s : %s\n", $3.addr, getVar($3.addr));
+                                                                }
 
 bool_expr		:	bool_expr OP_AND bool_expr					{ 
 																	char* temp = next_var();
@@ -175,14 +243,13 @@ int_expr		:	int_expr OP_MUL int_expr					{
                                                                 }
 
 				|	OP_ADD	NUMBER								{ 
-                                                                    char* temp = next_var();
-                                                                    printf("%s = %s\n", temp, $1.addr);
-                                                                    $$.addr = strdup(temp); 
+                                                                    $$.addr = strdup($2.addr); 
+                                                                }
+                |   ID                                          {
+                                                                    $$.addr = strdup($1.addr);
                                                                 }
 				|	NUMBER										{   
-                                                                    char* temp = next_var();
-                                                                    printf("%s = %s\n", temp, $1.addr);
-                                                                    $$.addr = strdup(temp); 
+                                                                    $$.addr = strdup($1.addr); 
                                                                 }
 				;
 
