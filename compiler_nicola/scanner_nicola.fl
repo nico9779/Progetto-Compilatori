@@ -69,7 +69,7 @@ print					{ printf("<keyword, PRINT>\n"); return KW_PRINT; }
 "}"	                    { printf("<bracket, CLOSE CURLY BRACKET>\n"); }
 
 ";"	                    { printf("<semicolon, >\n"); return SEMICOLON;}
-","                     { printf("<comma, >\n"); }
+","                     { printf("<comma, >\n"); return COMMA; }
 ":"                     { printf("<colon, >\n"); }
 
 {id}                    { 

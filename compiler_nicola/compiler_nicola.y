@@ -20,20 +20,23 @@ char* next_var() {
 typedef struct variable {
     const char* id;  // hash key
     char* addr;      // address of the value stored in the variable
+    char* type;      // type of the variable
     UT_hash_handle hh;
 } variable;
 
 variable* symbolTable = NULL;
 
-// Add variable to symbol table
-void addVar(char* id) {
+// Add variable to symbol table with initialization value in "init_value"
+void addVar(char* id, char* init_value, char* type) {
     variable* tmp;
     HASH_FIND_STR(symbolTable, id, tmp);
 
     if(tmp == NULL) {
         tmp = (variable*) malloc(sizeof(variable));
         tmp->id = id;
-        tmp->addr = strdup("0");
+        tmp->addr = init_value;
+        tmp->type = type;
+        
         HASH_ADD_KEYPTR(hh, symbolTable, tmp->id, strlen(tmp->id), tmp);
     } else {
         printf("ERROR: multiple definition for variable %s\n", id);
@@ -42,7 +45,7 @@ void addVar(char* id) {
 }
 
 // Set address of a variable "id" in the symbol table
-void setVar(char* id, char* addr){
+void setVarAddr(char* id, char* addr){
     variable* tmp;
     HASH_FIND_STR(symbolTable, id, tmp);
 
@@ -55,7 +58,7 @@ void setVar(char* id, char* addr){
 }
 
 // Get address of a variable "id" in the symbol table
-char* getVar(char* id){
+char* getVarAddr(char* id){
     variable* tmp;
     HASH_FIND_STR(symbolTable, id, tmp);
 
@@ -67,11 +70,37 @@ char* getVar(char* id){
     return tmp->addr;
 }
 
+// Get type of a variable "id" in the symbol table
+char* getVarType(char* id){
+    variable* tmp;
+    HASH_FIND_STR(symbolTable, id, tmp);
+
+    if(tmp == NULL) {
+        printf("ERROR: variable %s is not defined\n", id);
+        exit(-1);
+    }
+
+    return tmp->type;
+}
+
+// Return true (1) if a variable is in the symbol table else return false (0)
+int isVarDefined(char* id){
+    variable* tmp;
+    HASH_FIND_STR(symbolTable, id, tmp);
+
+    if(tmp == NULL) {
+        return 0;
+    }
+
+    return 1;
+}
+
 %}
 
 %union{
     struct address {
         char* addr;
+        char* type;
     } address;
 }
 
@@ -106,9 +135,12 @@ char* getVar(char* id){
 %token BR_ROUND_CLOSE
 
 %token SEMICOLON
+%token COMMA
 
 %type <address> bool_expr
 %type <address> int_expr
+%type <address> type
+%type <address> var_list
 
 %left OP_ADD OP_SUB
 %left OP_MUL OP_DIV
@@ -126,17 +158,41 @@ program			:	program stmt SEMICOLON					    { printf("\n"); }
 				|
 				;
 
-stmt            :   KW_INT ID                                   { 
-                                                                    addVar($2.addr);
-                                                                    printf("int %s\n", $2.addr); 
-                                                                }
+stmt            :   type var_list                               { }
+
                 |   ID OP_ASSIGN int_expr                       { 
-                                                                    setVar($1.addr, $3.addr);
+                                                                    setVarAddr($1.addr, $3.addr);
                                                                     printf("%s = %s\n", $1.addr, $3.addr); 
                                                                 }
                 |   KW_PRINT BR_ROUND_OPEN ID BR_ROUND_CLOSE    {
-                                                                    printf("%s : %s\n", $3.addr, getVar($3.addr));
+                                                                    printf("%s : type = %s, addr = %s\n", $3.addr, getVarType($3.addr), getVarAddr($3.addr));
                                                                 }
+                ;
+
+type            :   KW_INT                                      { 
+                                                                    $$.type = strdup("int"); 
+                                                                }
+                ;
+
+var_list        :   var_list COMMA ID                           {
+                                                                    addVar($3.addr, "0", $<address>0.type);
+                                                                    printf("%s %s\n", $<address>0.type, $3.addr);
+                                                                }
+                |   var_list COMMA ID OP_ASSIGN int_expr        {
+                                                                    addVar($3.addr, $5.addr, $<address>0.type);
+                                                                    printf("%s %s\n", $<address>0.type, $3.addr);
+                                                                    printf("%s = %s\n", $3.addr, $5.addr);
+                                                                }
+                |   ID OP_ASSIGN int_expr                       {
+                                                                    addVar($1.addr, $3.addr, $<address>0.type);
+                                                                    printf("%s %s\n", $<address>0.type, $1.addr);
+                                                                    printf("%s = %s\n", $1.addr, $3.addr);
+                                                                }
+                |   ID                                          {
+                                                                    addVar($1.addr, "0", $<address>0.type);
+                                                                    printf("%s %s\n", $<address>0.type, $1.addr);
+                                                                }
+                ;
 
 bool_expr		:	bool_expr OP_AND bool_expr					{ 
 																	char* temp = next_var();
@@ -241,11 +297,21 @@ int_expr		:	int_expr OP_MUL int_expr					{
                                                                     printf("%s = -%s\n", temp, $2.addr);
                                                                     $$.addr = strdup(temp); 
                                                                 }
-
+                |   OP_ADD  ID                                  {
+                                                                    if(!isVarDefined($2.addr)){
+                                                                        printf("ERROR : variable %s is not defined\n", $2.addr);
+                                                                        exit(-1);
+                                                                    }
+                                                                    $$.addr = strdup($2.addr);
+                                                                }                 
 				|	OP_ADD	NUMBER								{ 
                                                                     $$.addr = strdup($2.addr); 
                                                                 }
                 |   ID                                          {
+                                                                    if(!isVarDefined($1.addr)){
+                                                                        printf("ERROR : variable %s is not defined\n", $1.addr);
+                                                                        exit(-1);
+                                                                    }
                                                                     $$.addr = strdup($1.addr);
                                                                 }
 				|	NUMBER										{   
