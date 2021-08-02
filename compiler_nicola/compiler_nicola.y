@@ -8,13 +8,21 @@
 int yylex();
 void yyerror(char* str);
 
-int counter = 1;
+int var_counter = 1;
+int label_counter = 1;
 
 char* next_var() {
-    static char s[5];
-    sprintf(s, "t%d", counter);
-    counter++;
-    return s;
+    static char var[5];
+    sprintf(var, "t%d", var_counter);
+    var_counter++;
+    return var;
+}
+
+char* next_label() {
+    static char label[5];
+    sprintf(label, "L%d", label_counter);
+    label_counter++;
+    return label;
 }
 
 typedef struct variable {
@@ -101,6 +109,10 @@ int isVarDefined(char* id){
     struct address {
         char* addr;
         char* type;
+        char* next;
+        char* true_label;
+        char* false_label;
+        char* begin;
     } address;
 }
 
@@ -108,7 +120,9 @@ int isVarDefined(char* id){
 %token <address> ID
 
 %token KW_INT
-%token KW_PRINT
+%token KW_IF
+%token KW_ELSE
+%token KW_WHILE
 %token KW_FALSE
 %token KW_TRUE
 
@@ -133,6 +147,8 @@ int isVarDefined(char* id){
 
 %token BR_ROUND_OPEN
 %token BR_ROUND_CLOSE
+%token BR_CURLY_OPEN
+%token BR_CURLY_CLOSE
 
 %token SEMICOLON
 %token COMMA
@@ -141,33 +157,73 @@ int isVarDefined(char* id){
 %type <address> int_expr
 %type <address> type
 %type <address> var_list
+%type <address> stmt
+%type <address> stmt_list
+%type <address> program
+%type <address> M
+%type <address> P
 
 %left OP_ADD OP_SUB
 %left OP_MUL OP_DIV
 %right OP_UMINUS
 
-
+%right OP_EQ OP_NEQ
 %left OP_OR OP_XOR
 %left OP_AND
 %right OP_NOT
-%nonassoc OP_LT OP_LE OP_EQ OP_NEQ OP_GT OP_GE
+%nonassoc OP_LT OP_LE OP_GT OP_GE
 
 %%
 
-program			:	program stmt SEMICOLON					    { printf("\n"); }
-				|
-				;
+program			:	stmt_list					                            { printf("end\n"); }
 
-stmt            :   type var_list                               { }
-
-                |   ID OP_ASSIGN int_expr                       { 
-                                                                    setVarAddr($1.addr, $3.addr);
-                                                                    printf("%s = %s\n", $1.addr, $3.addr); 
-                                                                }
-                |   KW_PRINT BR_ROUND_OPEN ID BR_ROUND_CLOSE    {
-                                                                    printf("%s : type = %s, addr = %s\n", $3.addr, getVarType($3.addr), getVarAddr($3.addr));
-                                                                }
+stmt_list       :   stmt stmt_list                                          { }                                     
+                |   /* empty */                                             { }                     
                 ;
+
+stmt            :   type var_list SEMICOLON                                 { }
+
+                |   ID OP_ASSIGN int_expr SEMICOLON                         { 
+                                                                                setVarAddr($1.addr, $3.addr);
+                                                                                printf("%s = %s\n", $1.addr, $3.addr); 
+                                                                            }
+
+                |   M KW_IF BR_ROUND_OPEN bool_expr N BR_ROUND_CLOSE O L KW_ELSE { $1.next = strdup(next_label()); } { printf("goto %s\n", $1.next); printf("%s : ", $1.false_label); } L { printf("%s : ", $1.next); }
+
+                |   M KW_IF BR_ROUND_OPEN bool_expr N BR_ROUND_CLOSE O L { printf("%s : ", $1.next); }
+
+                |   P KW_WHILE BR_ROUND_OPEN bool_expr { printf("if %s goto %s\n", $4.addr, $1.true_label); printf("goto %s\n", $1.next); } BR_ROUND_CLOSE { printf("%s : ", $1.true_label); } L { printf("goto %s\n", $1.begin); printf("%s : ", $1.next); }
+                ;
+
+L               :   stmt                                                    { }
+                |   BR_CURLY_OPEN stmt_list BR_CURLY_CLOSE                  { }
+                ;
+
+M               :   {
+                        char* next = strdup(next_label());
+                        $$.next = next;
+                        $$.true_label = strdup(next_label());
+                        $$.false_label = next;
+                    }
+
+N               :   {
+                        printf("if %s goto %s\n", $<address>0.addr, $<address>-3.true_label);
+                        printf("goto %s\n", $<address>-3.false_label);
+                    }
+
+O               :   {
+                        printf("%s : ", $<address>-5.true_label);
+                    }
+
+P               :   { 
+                        $$.next = strdup(next_label());
+                        char* begin = strdup(next_label());
+                        $$.begin = begin;
+                        $$.true_label = strdup(next_label()); 
+                        printf("%s : ", begin);
+                    }
+
+
 
 type            :   KW_INT                                      { 
                                                                     $$.type = strdup("int"); 
@@ -305,7 +361,9 @@ int_expr		:	int_expr OP_MUL int_expr					{
                                                                     $$.addr = strdup($2.addr);
                                                                 }                 
 				|	OP_ADD	NUMBER								{ 
-                                                                    $$.addr = strdup($2.addr); 
+                                                                    char* temp = next_var();
+                                                                    printf("%s = %s\n", temp, $2.addr);
+                                                                    $$.addr = strdup(temp);  
                                                                 }
                 |   ID                                          {
                                                                     if(!isVarDefined($1.addr)){
@@ -315,7 +373,9 @@ int_expr		:	int_expr OP_MUL int_expr					{
                                                                     $$.addr = strdup($1.addr);
                                                                 }
 				|	NUMBER										{   
-                                                                    $$.addr = strdup($1.addr); 
+                                                                    char* temp = next_var();
+                                                                    printf("%s = %s\n", temp, $1.addr);
+                                                                    $$.addr = strdup(temp);  
                                                                 }
 				;
 
