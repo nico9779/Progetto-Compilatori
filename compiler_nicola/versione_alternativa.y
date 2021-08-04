@@ -11,7 +11,6 @@ void yyerror(char* str);
 int var_counter = 1;
 int label_counter = 1;
 
-// Function to create next temporary variable
 char* next_var() {
     static char var[5];
     sprintf(var, "t%d", var_counter);
@@ -19,7 +18,6 @@ char* next_var() {
     return var;
 }
 
-// Function to create next label
 char* next_label() {
     static char label[5];
     sprintf(label, "L%d", label_counter);
@@ -109,12 +107,12 @@ int isVarDefined(char* id){
 
 %union{
     struct address {
-        char* addr;             // address of a variable that contain the result of an expression
-        char* type;             // type of a declared variable
-        char* next;             // label next
-        char* true_label;       // true label of a boolean expression
-        char* false_label;      // false label of a boolean expression
-        char* begin;            // begin label of a while instruction
+        char* addr;
+        char* type;
+        char* next;
+        char* true_label;
+        char* false_label;
+        char* begin;
     } address;
 }
 
@@ -159,11 +157,16 @@ int isVarDefined(char* id){
 %type <address> int_expr
 %type <address> type
 %type <address> var_list
-%type <address> stmt
+%type <address> stmt_1
+%type <address> stmt_2
 %type <address> stmt_list
 %type <address> program
 %type <address> M
-%type <address> P
+%type <address> N
+%type <address> Q
+%type <address> R
+%type <address> S
+%type <address> T
 
 %left OP_ADD OP_SUB
 %left OP_MUL OP_DIV
@@ -179,54 +182,75 @@ int isVarDefined(char* id){
 
 program			:	stmt_list					                            { printf("end\n"); }
 
-stmt_list       :   stmt stmt_list                                          { }                                     
+stmt_list       :   stmt_1 stmt_list                                        { }  
+                |   M stmt_2 { printf("%s : ", $1.next); } stmt_list        { }
                 |   /* empty */                                             { }                     
                 ;
 
-stmt            :   type var_list SEMICOLON                                 { }
+stmt_1          :   type var_list SEMICOLON                                 { }
 
                 |   ID OP_ASSIGN int_expr SEMICOLON                         { 
                                                                                 setVarAddr($1.addr, $3.addr);
                                                                                 printf("%s = %s\n", $1.addr, $3.addr); 
                                                                             }
-
-                |   M KW_IF BR_ROUND_OPEN bool_expr N BR_ROUND_CLOSE O L KW_ELSE { $1.next = strdup(next_label()); printf("goto %s\n", $1.next); printf("%s : ", $1.false_label); } L { printf("%s : ", $1.next); }
-
-                |   M KW_IF BR_ROUND_OPEN bool_expr N BR_ROUND_CLOSE O L { printf("%s : ", $1.next); }
-
-                |   P KW_WHILE BR_ROUND_OPEN bool_expr N BR_ROUND_CLOSE O L { printf("goto %s\n", $1.begin); printf("%s : ", $1.next); }
                 ;
 
-L               :   stmt                                                    { }
-                |   BR_CURLY_OPEN stmt_list BR_CURLY_CLOSE                  { }
+stmt_2          :   N KW_IF BR_ROUND_OPEN bool_expr O BR_ROUND_CLOSE P T L KW_ELSE { printf("goto %s\n", $<address>0.next); printf("%s : ", $1.false_label); } { $<address>$.next = $<address>0.next; } L
+
+                |   N KW_IF BR_ROUND_OPEN bool_expr O BR_ROUND_CLOSE P T L  // Gli attributi non sono corretti per l'if a un ramo bisognerebbe risolvere le ambiguità
+
+                |   Q KW_WHILE BR_ROUND_OPEN bool_expr { printf("if %s goto %s\n", $4.addr, $1.true_label); printf("goto %s\n", $1.false_label); } BR_ROUND_CLOSE { printf("%s : ", $1.true_label); } { $<address>$.next = $<address>0.next; } L { printf("goto %s\n", $1.begin); }
                 ;
 
-M               :   {
-                        char* next = strdup(next_label());
-                        $$.next = next;
-                        $$.true_label = strdup(next_label());
-                        $$.false_label = next;
+L               :   R stmt_1                                                  { }
+                |   R stmt_2                                                  { }                                              
+                |   BR_CURLY_OPEN S stmt_list_1 BR_CURLY_CLOSE                { }   // Nella lista di statement serve creare le label alla fine 
+                ;
+
+stmt_list_1     :   stmt_1 stmt_list_1
+                |   stmt_2 stmt_list_1
+                |   /* empty */
+                ;
+
+M               :   { 
+                        $$.next = strdup(next_label());
                     }
 
 N               :   {
+                        $$.next = $<address>0.next; 
+                        $$.true_label = strdup(next_label());
+                        $$.false_label = strdup(next_label());
+                        
+                    }
+
+O               :   {
                         printf("if %s goto %s\n", $<address>0.addr, $<address>-3.true_label);
                         printf("goto %s\n", $<address>-3.false_label);
                     }
 
-O               :   {
+P               :   {
                         printf("%s : ", $<address>-5.true_label);
                     }
 
-P               :   { 
-                        char* next = strdup(next_label());
-                        $$.next = next;
+Q               :   { 
                         char* begin = strdup(next_label());
                         $$.begin = begin;
                         $$.true_label = strdup(next_label()); 
-                        $$.false_label = next;
+                        $$.false_label = $<address>0.next;
                         printf("%s : ", begin);
                     }
 
+R               :   {
+                        $$.next = $<address>-0.next;
+                    }
+
+S               :   {
+                        $$.next = $<address>-1.next;
+                    }
+
+T               :   {
+                        $$.next = $<address>-6.next;
+                    }
 
 
 type            :   KW_INT                                      { 
