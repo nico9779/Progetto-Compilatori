@@ -127,6 +127,7 @@ int isVarDefined(char* id){
 %token KW_WHILE
 %token KW_FALSE
 %token KW_TRUE
+%token KW_PRINT
 
 %token OP_ADD
 %token OP_SUB
@@ -189,6 +190,7 @@ stmt            :   type var_list SEMICOLON                                 { }
                                                                                 setVarAddr($1.addr, $3.addr);
                                                                                 printf("%s = %s\n", $1.addr, $3.addr); 
                                                                             }
+                |   KW_PRINT BR_ROUND_OPEN ID BR_ROUND_CLOSE SEMICOLON      { printf("print(%s)\n", $3.addr); }
 
                 |   M KW_IF BR_ROUND_OPEN bool_expr N BR_ROUND_CLOSE O L KW_ELSE { $1.next = strdup(next_label()); printf("goto %s\n", $1.next); printf("%s : ", $1.false_label); } L { printf("%s : ", $1.next); }
 

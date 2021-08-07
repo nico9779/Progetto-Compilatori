@@ -66,6 +66,7 @@ print					{
 							#ifdef PROJECT_LOGGING
 								printf("<keyword, PRINT>\n"); 
 							#endif 
+							return KW_PRINT;
 						}
 <<EOF>>        			{
 							#ifdef PROJECT_LOGGING
