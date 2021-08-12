@@ -144,7 +144,7 @@ program				:	statement_list								{
 																			printf("B<program: statement_list>\n");
 																		#endif
 
-																		printf("\n\n********** SYMBOL TABLE ********** \n");
+																		printf("\n\n********** SYMBOL TABLE **********\n");
 																		printSymbolTable(stdout, &sym_table);
 																		printf("\n\n");
 																	}
@@ -197,7 +197,7 @@ statement			:	var_type var_list PT_SEMICOLON				{
 																		}
 
 																		var->address = $3.addr;
-																		printf("%s = %s\n", $1.addr, $3.addr);
+																		printf("\t%s = %s\n", $1.addr, $3.addr);
 																	}
 
 					|	KW_PRINT BR_ROUND_OPEN int_expr BR_ROUND_CLOSE PT_SEMICOLON
@@ -206,7 +206,7 @@ statement			:	var_type var_list PT_SEMICOLON				{
 																			printf("B<statement: KW_PRINT BR_ROUND_OPEN int_expr BR_ROUND_CLOSE PT_SEMICOLON>\n");
 																		#endif
 
-																		printf("print(%s)\n", $3.addr);
+																		printf("\tprint(%s)\n", $3.addr);
 																	}
 					
 					|	KW_PRINT BR_ROUND_OPEN string_expr BR_ROUND_CLOSE PT_SEMICOLON
@@ -215,10 +215,10 @@ statement			:	var_type var_list PT_SEMICOLON				{
 																			printf("B<statement: KW_PRINT BR_ROUND_OPEN string_expr BR_ROUND_CLOSE PT_SEMICOLON>\n");
 																		#endif
 
-																		printf("print(%s)\n", $3.addr);
+																		printf("\tprint(%s)\n", $3.addr);
 																	}
 
-					|	d1 KW_IF BR_ROUND_OPEN bool_expr d2 BR_ROUND_CLOSE d3 statement_or_block KW_ELSE { $1.label_next = strdup(next_label_name()); printf("goto %s\n", $1.label_next); printf("%s:\n", $1.false_label); } statement_or_block { printf("%s:\n", $1.label_next); }
+					|	d1 KW_IF BR_ROUND_OPEN bool_expr d2 BR_ROUND_CLOSE d3 statement_or_block KW_ELSE { $1.label_next = strdup(next_label_name()); printf("\tgoto %s\n", $1.label_next); printf("%s:\n", $1.false_label); } statement_or_block { printf("%s:\n", $1.label_next); }
 																	{
 																		#ifdef PROJECT_LOGGING
 																			printf("B<statement: d1 KW_IF BR_ROUND_OPEN bool_expr d2 BR_ROUND_CLOSE d3 statement_or_block KW_ELSE {} statement_or_block {}>\n");
@@ -241,8 +241,8 @@ d1					:												{
 																	}
 
 d2					:												{
-																		printf("if %s goto %s\n", $<address>0.addr, $<address>-3.true_label);
-																		printf("goto %s\n", $<address>-3.false_label);
+																		printf("\tif %s goto %s\n", $<address>0.addr, $<address>-3.true_label);
+																		printf("\tgoto %s\n", $<address>-3.false_label);
 																	}
 
 d3					:												{
@@ -299,7 +299,7 @@ int_expr			:	int_expr OP_MUL int_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s * %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s * %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -312,7 +312,7 @@ int_expr			:	int_expr OP_MUL int_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s / %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s / %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -325,7 +325,7 @@ int_expr			:	int_expr OP_MUL int_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s + %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s + %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -338,7 +338,7 @@ int_expr			:	int_expr OP_MUL int_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s - %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s - %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -361,7 +361,7 @@ int_expr			:	int_expr OP_MUL int_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: -%s\n", new_var, $2.addr);
+																		printf("\t%s: -%s\n", new_var, $2.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($2.addr);
@@ -374,12 +374,12 @@ int_expr			:	int_expr OP_MUL int_expr					{
 
 																		if (!findVariableInSymbolTable(&sym_table, $1.addr))
 																		{
-																			printf("ERROR: variable %s is not defined.\n", $1.addr);
+																			printf("** ERROR: variable %s is not defined. **\n", $1.addr);
 																			exit(-1);
 																		}
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s\n", new_var, $1.addr);
+																		printf("\t%s: %s\n", new_var, $1.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -391,7 +391,7 @@ int_expr			:	int_expr OP_MUL int_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s\n", new_var, $1.addr);
+																		printf("\t%s: %s\n", new_var, $1.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -405,7 +405,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s AND %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s AND %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -418,7 +418,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s OR %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s OR %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -431,7 +431,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s XOR %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s XOR %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -444,7 +444,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 																	
 																		char* new_var = next_var_name();
-																		printf("%s: NOT %s\n", new_var, $2.addr);
+																		printf("\t%s: NOT %s\n", new_var, $2.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($2.addr);
@@ -456,7 +456,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s == %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s == %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -469,7 +469,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s != %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s != %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -482,7 +482,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s < %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s < %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -495,7 +495,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s <= %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s <= %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -508,7 +508,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s == %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s == %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -521,7 +521,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s != %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s != %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -534,7 +534,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s > %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s > %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -547,7 +547,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s >= %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t%s: %s >= %s\n", new_var, $1.addr, $3.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
@@ -570,7 +570,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: FALSE\n", new_var);
+																		printf("\t%s: FALSE\n", new_var);
 																		$$.addr = strdup(new_var);
 																	}
 
@@ -580,7 +580,7 @@ bool_expr			:	bool_expr OP_AND bool_expr					{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: TRUE\n", new_var);
+																		printf("\t%s: TRUE\n", new_var);
 																		$$.addr = strdup(new_var);
 																	}
 
@@ -593,7 +593,7 @@ string_expr			:	STRING										{
 																		#endif
 
 																		char* new_var = next_var_name();
-																		printf("%s: %s\n", new_var, $1.addr);
+																		printf("\t%s: %s\n", new_var, $1.addr);
 																		$$.addr = strdup(new_var);
 
 																		free($1.addr);
