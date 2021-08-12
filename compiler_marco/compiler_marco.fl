@@ -18,7 +18,8 @@ ws                      	{delim}+
 letter                  	[A-Za-z]
 digit                   	[0-9]
 
-number                  	{digit}+\.?{digit}*
+id							{letter}({letter}|{digit})*
+number						{digit}+
 
 %%
 
@@ -27,6 +28,14 @@ number                  	{digit}+\.?{digit}*
 {ws}                    	{}     /* eat up whitespaces */
 
 	/* ******************** PUNCTUATORS ******************** */
+
+","							{
+								#ifdef PROJECT_LOGGING
+									printf("F<PT_COMMA>\n");
+								#endif
+
+								return PT_COMMA;
+							}
 
 ";"							{
 								#ifdef PROJECT_LOGGING
@@ -38,12 +47,52 @@ number                  	{digit}+\.?{digit}*
 
 	/* ******************** KEYWORDS ******************** */
 
+"do"						{ 
+								#ifdef PROJECT_LOGGING
+									printf("F<KW_DO>\n"); 
+								#endif
+
+								return KW_DO;
+							}
+
+"else"						{ 
+								#ifdef PROJECT_LOGGING
+									printf("F<KW_ELSE>\n"); 
+								#endif
+
+								return KW_ELSE;
+							}
+
 "false"						{
 								#ifdef PROJECT_LOGGING
 									printf("F<KW_FALSE>\n");
 								#endif
 
 								return KW_FALSE;
+							}
+
+"for"						{ 
+								#ifdef PROJECT_LOGGING
+									printf("F<KW_FOR>\n"); 
+								#endif
+
+								return KW_FOR; 
+							}
+
+"if"						{ 
+								#ifdef PROJECT_LOGGING
+									printf("F<KW_IF>\n"); 
+								#endif
+
+								return KW_IF;
+							}
+
+"int"						{ 
+								#ifdef PROJECT_LOGGING
+									printf("F<KW_INT>\n"); 
+								#endif
+
+								return KW_INT;
 							}
 
 "print"						{
@@ -54,12 +103,28 @@ number                  	{digit}+\.?{digit}*
 								return KW_PRINT;
 							}
 
+"return"					{ 
+								#ifdef PROJECT_LOGGING
+									printf("F<KW_RETURN>\n"); 
+								#endif
+
+								return KW_RETURN;
+							}
+
 "true"						{
 								#ifdef PROJECT_LOGGING
 									printf("F<KW_TRUE>\n");
 								#endif
 
 								return KW_TRUE;
+							}
+
+"while"						{ 
+								#ifdef PROJECT_LOGGING
+									printf("F<KW_WHILE>\n"); 
+								#endif
+
+								return KW_WHILE;
 							}
 
 	/* ******************** BRACKETS ******************** */
@@ -78,6 +143,22 @@ number                  	{digit}+\.?{digit}*
 								#endif
 
 								return BR_ROUND_CLOSE;
+							}
+
+"{"	                    	{
+								#ifdef PROJECT_LOGGING
+									printf("F<BR_CURLY_OPEN>\n");
+								#endif
+
+								return BR_CURLY_OPEN;
+							}
+
+"}"	                    	{
+								#ifdef PROJECT_LOGGING
+									printf("F<BR_CURLY_CLOSE>\n");
+								#endif
+
+								return BR_CURLY_CLOSE;
 							}
 
 	/* ******************** ARITHMETIC OPERATORS ******************** */
@@ -210,7 +291,16 @@ number                  	{digit}+\.?{digit}*
 
 	/* ******************** OTHERS ******************** */
 
-{number}               		{
+{id}						{
+								#ifdef PROJECT_LOGGING
+									printf("F<ID, %s>\n", yytext); 
+								#endif
+
+								yylval.address.addr = strdup(yytext);							
+								return ID;
+							}
+
+{number}         		{
 								#ifdef PROJECT_LOGGING
 									printf("F<NUMBER, %s>\n", yytext);
 								#endif
