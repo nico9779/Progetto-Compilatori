@@ -291,6 +291,7 @@ var_list			:	var_list PT_COMMA ID						{
 
 																		addVariableToSymbolTable(&sym_table, $1.addr, $<address>0.type, "0");
 																	}
+					;
 
 
 int_expr			:	int_expr OP_MUL int_expr					{
