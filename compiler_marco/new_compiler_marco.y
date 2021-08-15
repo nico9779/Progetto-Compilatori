@@ -169,7 +169,9 @@ symbol_table sym_table;
 %%
 
 
-PROGRAM				:	STATEMENT_LIST								{}
+PROGRAM				:	STATEMENT_LIST								{
+																		printf("<END>\n");
+																	}
 
 
 BLOCK				:	br_curly_open STATEMENT_LIST br_curly_close	{}
@@ -305,7 +307,7 @@ VAR_LIST			:	VAR_LIST pt_comma id op_assign INT_EXPR		{
 
 INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s * %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s * %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -313,7 +315,7 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 
 					|	INT_EXPR op_div INT_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s / %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s / %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -321,7 +323,7 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 
 					|	INT_EXPR op_mod INT_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s mod %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s mod %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -329,7 +331,7 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 
 					|	INT_EXPR op_add INT_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s + %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s + %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -337,7 +339,7 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 
 					|	INT_EXPR op_sub INT_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s - %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s - %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -349,7 +351,7 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 
 					|	op_sub INT_EXPR %prec op_uminus				{
 																		$$.addr = next_var_name();
-																		printf("\t%s: -%s\n", $$.addr, $2.addr);
+																		printf("\t%s = -%s\n", $$.addr, $2.addr);
 
 																		free($2.addr);
 																	}
@@ -361,15 +363,17 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 																			exit(-1);
 																		}
 
-																		$$.addr = next_var_name();
-																		printf("\t%s: %s\n", $$.addr, $1.addr);
+																		//$$.addr = next_var_name();
+																		//printf("\t%s = %s\n", $$.addr, $1.addr);
 
-																		free($1.addr);
+																		//free($1.addr);
+
+																		$$.addr = $1.addr;
 																	}
 
 					|	int_number									{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s\n", $$.addr, $1.addr);
+																		printf("\t%s = %s\n", $$.addr, $1.addr);
 
 																		free($1.addr);
 																	}
@@ -378,7 +382,7 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 
 BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s AND %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s AND %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -386,7 +390,7 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	BOOL_EXPR op_or BOOL_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s OR %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s OR %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -394,7 +398,7 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	BOOL_EXPR op_xor BOOL_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s XOR %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s XOR %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -402,14 +406,14 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	op_not BOOL_EXPR							{
 																		$$.addr = next_var_name();
-																		printf("\t%s: NOT %s\n", $$.addr, $2.addr);
+																		printf("\t%s = NOT %s\n", $$.addr, $2.addr);
 
 																		free($2.addr);
 																	}
 
 					|	BOOL_EXPR op_eq BOOL_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s == %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s == %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -417,7 +421,7 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	BOOL_EXPR op_ne BOOL_EXPR					{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s != %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s != %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -425,7 +429,7 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	INT_EXPR op_eq INT_EXPR						{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s == %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s == %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -433,7 +437,7 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	INT_EXPR op_ne INT_EXPR						{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s != %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s != %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -441,7 +445,7 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	INT_EXPR op_lt INT_EXPR						{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s < %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s < %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -449,7 +453,7 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	INT_EXPR op_le INT_EXPR						{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s <= %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s <= %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -457,7 +461,7 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	INT_EXPR op_gt INT_EXPR						{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s > %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s > %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -465,7 +469,7 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	INT_EXPR op_ge INT_EXPR						{
 																		$$.addr = next_var_name();
-																		printf("\t%s: %s >= %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t%s = %s >= %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
@@ -477,12 +481,12 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 					|	kw_false									{
 																		$$.addr = next_var_name();
-																		printf("\t%s: FALSE\n", $$.addr);
+																		printf("\t%s = FALSE\n", $$.addr);
 																	}
 
 					|	kw_true										{
 																		$$.addr = next_var_name();
-																		printf("\t%s: TRUE\n", $$.addr);
+																		printf("\t%s = TRUE\n", $$.addr);
 																	}
 
 					;

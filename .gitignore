@@ -1,6 +1,7 @@
 *.tab.h
+*.tab.c
+*.yy.c
 *.hpp
-*.c
 *.cpp
 *.out
 *.exe
