@@ -233,6 +233,11 @@ void printSymbolTable()
 
 /* *** ASSIGNMENT OPERATORS *** */
 %token <address> op_assign
+%token <address> op_mul_assign
+%token <address> op_div_assign
+%token <address> op_mod_assign
+%token <address> op_add_assign
+%token <address> op_sub_assign
 
 /* *** RELATIONAL OPERATORS *** */
 %token <address> op_eq
@@ -325,6 +330,71 @@ STATEMENT			:	VAR_TYPE VAR_LIST pt_semicolon				{
 
 																		printf("\t\t%s = %s\n", $1.addr, $3.addr);
 
+																		//free($1.addr);
+																	}
+
+					|	id op_mul_assign INT_EXPR pt_semicolon		{
+																		LOG_Y("B<STATEMENT: id op_mul_assign INT_EXPR pt_semicolon>\n");
+
+																		char* new_var = next_var_name();
+																		setVarAddr($1.addr, new_var);
+
+																		printf("\t\t%s = %s * %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t\t%s = %s\n", $1.addr, new_var);
+
+																		free($3.addr);
+																		//free($1.addr);
+																	}
+
+					|	id op_div_assign INT_EXPR pt_semicolon		{
+																		LOG_Y("B<STATEMENT: id op_div_assign INT_EXPR pt_semicolon>\n");
+
+																		char* new_var = next_var_name();
+																		setVarAddr($1.addr, new_var);
+
+																		printf("\t\t%s = %s / %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t\t%s = %s\n", $1.addr, new_var);
+
+																		free($3.addr);
+																		//free($1.addr);
+																	}
+
+					|	id op_mod_assign INT_EXPR pt_semicolon		{
+																		LOG_Y("B<STATEMENT: id op_mod_assign INT_EXPR pt_semicolon>\n");
+
+																		char* new_var = next_var_name();
+																		setVarAddr($1.addr, new_var);
+
+																		printf("\t\t%s = %s mod %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t\t%s = %s\n", $1.addr, new_var);
+
+																		free($3.addr);
+																		//free($1.addr);
+																	}
+
+					|	id op_add_assign INT_EXPR pt_semicolon		{
+																		LOG_Y("B<STATEMENT: id op_add_assign INT_EXPR pt_semicolon>\n");
+
+																		char* new_var = next_var_name();
+																		setVarAddr($1.addr, new_var);
+
+																		printf("\t\t%s = %s + %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t\t%s = %s\n", $1.addr, new_var);
+
+																		free($3.addr);
+																		//free($1.addr);
+																	}
+
+					|	id op_sub_assign INT_EXPR pt_semicolon		{
+																		LOG_Y("B<STATEMENT: id op_sub_assign INT_EXPR pt_semicolon>\n");
+
+																		char* new_var = next_var_name();
+																		setVarAddr($1.addr, new_var);
+
+																		printf("\t\t%s = %s - %s\n", new_var, $1.addr, $3.addr);
+																		printf("\t\t%s = %s\n", $1.addr, new_var);
+
+																		free($3.addr);
 																		//free($1.addr);
 																	}
 

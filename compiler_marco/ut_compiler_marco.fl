@@ -64,15 +64,21 @@ number						{digit}+
 
 	/* ******************** ARITHMETIC OPERATORS ******************** */
 
-"+"							{ LOG_FL("F<op_add>\n"); return op_add; }
-"-"							{ LOG_FL("F<op_sub>\n"); return op_sub; }
 "*"							{ LOG_FL("F<op_mul>\n"); return op_mul; }
 "/"							{ LOG_FL("F<op_div>\n"); return op_div; }
 "%"							{ LOG_FL("F<op_mod>\n"); return op_mod; }
+"+"							{ LOG_FL("F<op_add>\n"); return op_add; }
+"-"							{ LOG_FL("F<op_sub>\n"); return op_sub; }
 
 	/* ******************** ASSIGNMENT OPERATORS ******************** */
 
-"="							{ LOG_FL("F<op_assign>\n"); return op_assign; }
+"="							{ LOG_FL("F<op_assign>\n");     return op_assign; }
+
+"*="						{ LOG_FL("F<op_mul_assign>\n"); return op_mul_assign; }
+"/="						{ LOG_FL("F<op_div_assign>\n"); return op_div_assign; }
+"%="						{ LOG_FL("F<op_mod_assign>\n"); return op_mod_assign; }
+"+="						{ LOG_FL("F<op_add_assign>\n"); return op_add_assign; }
+"-="						{ LOG_FL("F<op_sub_assign>\n"); return op_sub_assign; }
 
 	/* ******************** RELATIONAL OPERATORS ******************** */
 

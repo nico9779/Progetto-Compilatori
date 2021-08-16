@@ -1,6 +1,6 @@
 int x;
 int y;
-x = x+y*3;
+x %= x+y*3;
 
 while(x<17){
   if(y==2){
