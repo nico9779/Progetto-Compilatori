@@ -409,7 +409,7 @@ STATEMENT			:	VAR_TYPE VAR_LIST pt_semicolon				{
 
 					|	START_IF_STATEMENT kw_else { $1.next_label = next_label_name(); printf("\t\tgoto %s\n", $1.next_label); printf("\t%s:\n", $1.false_label); } BLOCK { printf("\t%s:\n", $1.next_label); }
 																	{
-																		LOG_Y("B<STATEMENT: kw_if DUMMY_IF br_round_open BOOL_EXPR br_round_close {} BLOCK kw_else {} BLOCK {}>\n");
+																		LOG_Y("B<STATEMENT: kw_if br_round_open BOOL_EXPR br_round_close BLOCK kw_else BLOCK>\n");
 
 																		free($1.next_label);
 																		free($1.true_label);
@@ -418,7 +418,7 @@ STATEMENT			:	VAR_TYPE VAR_LIST pt_semicolon				{
 
 					|	START_IF_STATEMENT { printf("\t%s:\n", $1.next_label); }
 																	{
-																		LOG_Y("B<STATEMENT: kw_if DUMMY_IF br_round_open BOOL_EXPR br_round_close {} BLOCK>\n");
+																		LOG_Y("B<STATEMENT: kw_if br_round_open BOOL_EXPR br_round_close BLOCK>\n");
 
 																		free($1.next_label);
 																		free($1.true_label);
