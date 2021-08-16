@@ -159,6 +159,15 @@ int isVarDefined(char* id)
 }
 
 
+void printSymbolTable()
+{
+	for (variable* ptr = symbol_table; ptr != NULL; ptr = ptr->hh.next)
+		printf("id: %s    type: %s    addr: %s\n", ptr->id, ptr->type, ptr->addr);
+
+	printf("\n");
+}
+
+
 %}
 
 
