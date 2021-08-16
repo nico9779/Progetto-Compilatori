@@ -365,7 +365,7 @@ int_expr		:	int_expr OP_MUL int_expr					{
                                                                         exit(-1);
                                                                     }
                                                                     $$.addr = strdup($2.addr);
-                                                                }                 
+                                                                }
 				|	OP_ADD	NUMBER								{ 
                                                                     char* temp = next_var();
                                                                     printf("%s = %s\n", temp, $2.addr);

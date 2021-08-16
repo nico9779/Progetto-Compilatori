@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "symbol_table.h"
+#include "uthash.h"
 
 int yylex();
 void yyerror(char* str);
@@ -19,7 +19,7 @@ int var_counter = 1;
 
 char* next_label_name()
 {
-	int counter = 0;
+	int counter = 1;
 	int value = label_counter;
 	while (value != 0)
 	{
@@ -41,7 +41,7 @@ char* next_label_name()
 
 char* next_var_name()
 {
-	int counter = 0;
+	int counter = 1;
 	int value = var_counter;
 	while (value != 0)
 	{
@@ -63,7 +63,100 @@ char* next_var_name()
 
 extern int yydebug;
 
-symbol_table sym_table;
+
+typedef struct variable
+{
+	char* id;
+	char* addr;
+	char* type;
+	UT_hash_handle hh;
+}variable;
+
+variable* symbol_table = NULL;
+
+
+// Add variable to symbol table with initial value in "addr".
+void addVar(char* id, char* addr, char* type)
+{
+    variable* tmp;
+    HASH_FIND_STR(symbol_table, id, tmp);
+
+    if(tmp == NULL)
+	{
+        tmp = (variable*) malloc(sizeof(variable));
+        tmp->id = id;
+        tmp->addr = addr;
+		tmp->type = type;
+
+        HASH_ADD_KEYPTR(hh, symbol_table, tmp->id, strlen(tmp->id), tmp);
+    }
+	else
+	{
+        printf("ERROR: multiple definition for variable %s\n", id);
+        exit(-1);
+    }
+}
+
+
+// Set address of a variable "id" in the symbol table.
+void setVarAddr(char* id, char* addr)
+{
+    variable* tmp;
+    HASH_FIND_STR(symbol_table, id, tmp);
+
+    if(tmp == NULL)
+	{
+        printf("ERROR: variable %s is not defined\n", id);
+        exit(-1);
+    }
+
+    tmp->addr = addr;
+}
+
+
+// Get address of a variable "id" in the symbol table.
+char* getVarAddr(char* id)
+{
+    variable* tmp;
+    HASH_FIND_STR(symbol_table, id, tmp);
+
+    if(tmp == NULL)
+	{
+        printf("ERROR: variable %s is not defined\n", id);
+        exit(-1);
+    }
+
+    return tmp->addr;
+}
+
+
+// Get type of a variable "id" in the symbol table.
+char* getVarType(char* id)
+{
+    variable* tmp;
+    HASH_FIND_STR(symbol_table, id, tmp);
+
+    if(tmp == NULL)
+	{
+        printf("ERROR: variable %s is not defined\n", id);
+        exit(-1);
+    }
+
+    return tmp->type;
+}
+
+
+// Return true (1) if a variable is in the symbol table else return false (0).
+int isVarDefined(char* id)
+{
+    variable* tmp;
+    HASH_FIND_STR(symbol_table, id, tmp);
+
+    if(tmp == NULL)
+        return 0;
+	else
+		return 1;
+}
 
 
 %}
@@ -189,14 +282,8 @@ STATEMENT			:	VAR_TYPE VAR_LIST pt_semicolon				{
 																	}
 
 					|	id op_assign INT_EXPR pt_semicolon			{
-																		variable* var = findVariableInSymbolTable(&sym_table, $1.addr);
-																		if (!var)
-																		{
-																			printf("ERROR: variable %s is not defined.\n", $1.addr);
-																			exit(-1);
-																		}
+																		setVarAddr($1.addr, $3.addr);
 
-																		var->address = $3.addr;
 																		printf("\t%s = %s\n", $1.addr, $3.addr);
 
 																		//free($1.addr);
@@ -271,36 +358,36 @@ VAR_LIST			:	VAR_LIST pt_comma id op_assign INT_EXPR		{
 																		printf("\t%s %s\n", $<address>0.type, $3.addr);
 																		printf("\t%s = %s\n", $3.addr, $5.addr);
 
-																		addVariableToSymbolTable(&sym_table, $3.addr, $<address>0.type, $5.addr);
+																		addVar($3.addr, $5.addr, $<address>0.type);
 
-																		free($3.addr);
-																		free($5.addr);
+																		//free($3.addr);
+																		//free($5.addr);
 																	}
 
 					|	VAR_LIST pt_comma id						{
 																		printf("\t%s %s\n", $<address>0.type, $3.addr);
 
-																		addVariableToSymbolTable(&sym_table, $3.addr, $<address>0.type, "0");
+																		addVar($3.addr, "0", $<address>0.type);
 
-																		free($3.addr);
+																		//free($3.addr);
 																	}
 
 					|	id op_assign INT_EXPR						{
 																		printf("\t%s %s\n", $<address>0.type, $1.addr);
 																		printf("\t%s = %s\n", $1.addr, $3.addr);
 
-																		addVariableToSymbolTable(&sym_table, $1.addr, $<address>0.type, $3.addr);
+																		addVar($1.addr, $3.addr, $<address>0.type);
 
-																		free($1.addr);
-																		free($3.addr);
+																		//free($1.addr);
+																		//free($3.addr);
 																	}
 
 					|	id											{
 																		printf("\t%s %s\n", $<address>0.type, $1.addr);
 
-																		addVariableToSymbolTable(&sym_table, $1.addr, $<address>0.type, "0");
+																		addVar($1.addr, "0", $<address>0.type);
 
-																		free($1.addr);
+																		//free($1.addr);
 																	}
 					;
 
@@ -356,19 +443,31 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 																		free($2.addr);
 																	}
 
+					|	op_add id									{
+																		if(!isVarDefined($2.addr))
+																		{
+																			printf("** ERROR: variable %s is not defined. **\n", $2.addr);
+																			exit(-1);
+																		}
+
+																		$$.addr = $2.addr;
+																	}
+
 					|	id											{
-																		if (!findVariableInSymbolTable(&sym_table, $1.addr))
+																		if(!isVarDefined($1.addr))
 																		{
 																			printf("** ERROR: variable %s is not defined. **\n", $1.addr);
 																			exit(-1);
 																		}
 
-																		//$$.addr = next_var_name();
-																		//printf("\t%s = %s\n", $$.addr, $1.addr);
-
-																		//free($1.addr);
-
 																		$$.addr = $1.addr;
+																	}
+
+					|	op_add int_number							{
+																		$$.addr = next_var_name();
+																		printf("\t%s = %s\n", $$.addr, $2.addr);
+
+																		free($2.addr);
 																	}
 
 					|	int_number									{
@@ -498,26 +597,14 @@ int main()
 {
 	yydebug = 0;
 
-	allocateSymbolTable(&sym_table, 10);
-	if (!sym_table.data)
-	{
-		fprintf(stderr, "Unable to allocate the symbol table.");
-		return 0;
-	}
-
-
 	if (yyparse() != 0)
 		fprintf(stderr, "Abnormal exit.");
 
-
-	destroySymbolTable(&sym_table);
 	return 0;
 }
 
 void yyerror(char* str)
 {
 	fprintf(stderr, "Parsing error: %s\n", str);
-
-	destroySymbolTable(&sym_table);
 	exit(0);
 }

@@ -11,7 +11,7 @@ void allocateSymbolTable(symbol_table* table, int start_capacity)
 	if (!table)
 		return;
 
-	// Can't allocate a symbol table with a negative or zero capacity.
+	// Can't allocate a symbol table with negative or zero capacity.
 	if (start_capacity < 1)
 	{
 		table->data = NULL;
@@ -23,7 +23,7 @@ void allocateSymbolTable(symbol_table* table, int start_capacity)
 
 
 	// Allocate the buffer for the new symbol table.
-	variable* data = malloc(sizeof(variable) * start_capacity);
+	variable* data = (variable*)malloc(sizeof(variable) * start_capacity);
 	if (!data)
 	{
 		table->data = NULL;
