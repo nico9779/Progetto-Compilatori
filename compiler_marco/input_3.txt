@@ -1,12 +1,17 @@
-int x = 1, y;
+int x;
+int y;
+x = x+y*3;
 
-if(x>1 or y<1 and true)
-{
-    if(x>=0)
-        x = 10;
-    else
-        y = -x;
+while(x<17){
+  if(y==2){
+     x = x+1;
+  }
+}
+
+if(x>3){
+   int z;
+   z = x+1;
 }
 else {
-  y = -1; 
+  print("il valore di x e': " + (9+3));
 }

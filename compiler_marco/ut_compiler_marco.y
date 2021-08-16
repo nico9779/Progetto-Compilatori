@@ -1,7 +1,13 @@
 %debug
 
 %{
+//Used to enable Bison own debug trace output (set also yydebug = 1 in main() function!).
 #define YYDEBUG 1
+
+
+//Use it to enable debugging output, comment the line to disable it.
+//#define PROJECT_LOGGING
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +17,16 @@
 
 int yylex();
 void yyerror(char* str);
+extern int yydebug;
+
+
+//Logging function.
+void LOG_Y(const char* str)
+{
+	#ifdef PROJECT_LOGGING
+		printf("%s", str);
+	#endif
+}
 
 
 int label_counter = 1;
@@ -28,7 +44,7 @@ char* next_label_name()
 	}
 
 
-	char* buffer = (char*)malloc(sizeof(char) * counter);
+	char* buffer = (char*) malloc(sizeof(char) * counter);
 	if (!buffer)
 		yyerror("Unable to allocate heap memory.");
 
@@ -50,7 +66,7 @@ char* next_var_name()
 	}
 
 
-	char* buffer = (char*)malloc(sizeof(char) * counter);
+	char* buffer = (char*) malloc(sizeof(char) * counter);
 	if (!buffer)
 		yyerror("Unable to allocate heap memory.");
 
@@ -59,9 +75,6 @@ char* next_var_name()
 
 	return buffer;
 }
-
-
-extern int yydebug;
 
 
 typedef struct variable
@@ -255,6 +268,7 @@ void printSymbolTable()
 
 %type <address> INT_EXPR
 %type <address> BOOL_EXPR
+%type <address> STRING_EXPR
 
 
 %left op_add op_sub
@@ -272,65 +286,86 @@ void printSymbolTable()
 
 
 PROGRAM				:	STATEMENT_LIST								{
-																		printf("<END>\n");
+																		LOG_Y("B<PROGRAM: STATEMENT_LIST>\n");
+																		printf("\t<END>\n");
 																	}
 
 
-BLOCK				:	br_curly_open STATEMENT_LIST br_curly_close	{}
-					|	STATEMENT									{}
+BLOCK				:	br_curly_open STATEMENT_LIST br_curly_close	{
+																		LOG_Y("B<BLOCK: br_curly_open STATEMENT_LIST br_curly_close>\n");
+																	}
+
+					|	STATEMENT									{
+																		LOG_Y("B<BLOCK: STATEMENT>\n");
+																	}
+
 					;
 
 
-STATEMENT_LIST		:	STATEMENT STATEMENT_LIST					{}
-					|												{}
+STATEMENT_LIST		:	STATEMENT STATEMENT_LIST					{
+																		LOG_Y("B<STATEMENT_LIST: STATEMENT STATEMENT_LIST>\n");
+																	}
+
+					|												{
+																		LOG_Y("B<STATEMENT_LIST: _>\n");
+																	}
 					;
 
 
 STATEMENT			:	VAR_TYPE VAR_LIST pt_semicolon				{
+																		LOG_Y("B<STATEMENT: VAR_TYPE VAR_LIST pt_semicolon>\n");
+
 																		//free($1.type);
 																	}
 
 					|	id op_assign INT_EXPR pt_semicolon			{
+																		LOG_Y("B<STATEMENT: id op_assign INT_EXPR pt_semicolon>\n");
+
 																		setVarAddr($1.addr, $3.addr);
 
-																		printf("\t%s = %s\n", $1.addr, $3.addr);
+																		printf("\t\t%s = %s\n", $1.addr, $3.addr);
 
 																		//free($1.addr);
 																	}
 
-					|	kw_print br_round_open INT_EXPR br_round_close pt_semicolon
+					|	kw_print br_round_open STRING_EXPR br_round_close pt_semicolon
 																	{
-																		printf("\tprint(%s)\n", $3.addr);
+																		LOG_Y("B<STATEMENT: kw_print br_round_open STRING_EXPR br_round_close pt_semicolon>\n");
+
+																		printf("\t\tprint(%s)\n", $3.addr);
 
 																		free($3.addr);
 																	}
 
-					|	kw_print br_round_open BOOL_EXPR br_round_close pt_semicolon
+					|	START_IF_STATEMENT kw_else { $1.next_label = next_label_name(); printf("\t\tgoto %s\n", $1.next_label); printf("\t%s:\n", $1.false_label); } BLOCK { printf("\t%s:\n", $1.next_label); }
 																	{
-																		printf("\tprint(%s)\n", $3.addr);
+																		LOG_Y("B<STATEMENT: kw_if DUMMY_IF br_round_open BOOL_EXPR br_round_close {} BLOCK kw_else {} BLOCK {}>\n");
 
-																		free($3.addr);
+																		free($1.next_label);
+																		free($1.true_label);
+																		free($1.false_label);
 																	}
 
-					|	START_IF_STATEMENT kw_else { $1.next_label = next_label_name(); printf("\tgoto %s\n", $1.next_label); printf("%s:\n", $1.false_label); } BLOCK { printf("%s:\n", $1.next_label); }
+					|	START_IF_STATEMENT { printf("\t%s:\n", $1.next_label); }
 																	{
-																		//free($1.next_label);
-																		//free($1.true_label);
-																		//free($1.false_label);
-																	}
+																		LOG_Y("B<STATEMENT: kw_if DUMMY_IF br_round_open BOOL_EXPR br_round_close {} BLOCK>\n");
 
-					|	START_IF_STATEMENT { printf("%s:\n", $1.next_label); }
-																	{
-																		//free($1.next_label);
-																		//free($1.true_label);
+																		free($1.next_label);
+																		free($1.true_label);
 																	}
 					
-					|	kw_while DUMMY_WHILE { printf("%s:\n", $2.cond_label); } br_round_open BOOL_EXPR br_round_close { printf("\tif %s goto %s\n", $5.addr, $2.true_label); printf("\tgoto %s\n", $2.next_label); printf("%s:\n", $2.true_label); } BLOCK { printf("\tgoto %s\n", $2.cond_label); printf("%s:\n", $2.next_label); }
-																	{}
+					|	kw_while DUMMY_WHILE { printf("\t%s:\n", $2.cond_label); } br_round_open BOOL_EXPR br_round_close { printf("\t\tif %s goto %s\n", $5.addr, $2.true_label); printf("\t\tgoto %s\n", $2.next_label); printf("\t%s:\n", $2.true_label); } BLOCK { printf("\t\tgoto %s\n", $2.cond_label); printf("\t%s:\n", $2.next_label); }
+																	{
+																		LOG_Y("B<kw_while DUMMY_WHILE {} br_round_open BOOL_EXPR br_round_close {} BLOCK {}>\n");
+																		
+																		free($1.cond_label);
+																		free($1.true_label);
+																		free($1.next_label);
+																	}
 					;
 
 
-START_IF_STATEMENT	:	kw_if DUMMY_IF br_round_open BOOL_EXPR br_round_close { printf("\tif %s goto %s\n", $4.addr, $2.true_label); printf("\tgoto %s\n", $2.false_label); printf("%s:\n", $2.true_label); } BLOCK
+START_IF_STATEMENT	:	kw_if DUMMY_IF br_round_open BOOL_EXPR br_round_close { printf("\t\tif %s goto %s\n", $4.addr, $2.true_label); printf("\t\tgoto %s\n", $2.false_label); printf("\t%s:\n", $2.true_label); } BLOCK
 																	{
 																		//free($4.addr);
 
@@ -358,14 +393,18 @@ DUMMY_WHILE			:												{
 
 
 VAR_TYPE			:	kw_int										{
+																		LOG_Y("B<VAR_TYPE: kw_int>\n");
+
 																		$$.type = strdup("int");
 																	}
 					;
 
 
 VAR_LIST			:	VAR_LIST pt_comma id op_assign INT_EXPR		{
-																		printf("\t%s %s\n", $<address>0.type, $3.addr);
-																		printf("\t%s = %s\n", $3.addr, $5.addr);
+																		LOG_Y("B<VAR_LIST: VAR_LIST pt_comma id op_assign INT_EXPR>\n");
+
+																		printf("\t\t%s %s\n", $<address>0.type, $3.addr);
+																		printf("\t\t%s = %s\n", $3.addr, $5.addr);
 
 																		addVar($3.addr, $5.addr, $<address>0.type);
 
@@ -374,7 +413,9 @@ VAR_LIST			:	VAR_LIST pt_comma id op_assign INT_EXPR		{
 																	}
 
 					|	VAR_LIST pt_comma id						{
-																		printf("\t%s %s\n", $<address>0.type, $3.addr);
+																		LOG_Y("B<VAR_LIST: VAR_LIST pt_comma id>\n");
+
+																		printf("\t\t%s %s\n", $<address>0.type, $3.addr);
 
 																		addVar($3.addr, "0", $<address>0.type);
 
@@ -382,8 +423,10 @@ VAR_LIST			:	VAR_LIST pt_comma id op_assign INT_EXPR		{
 																	}
 
 					|	id op_assign INT_EXPR						{
-																		printf("\t%s %s\n", $<address>0.type, $1.addr);
-																		printf("\t%s = %s\n", $1.addr, $3.addr);
+																		LOG_Y("B<VAR_LIST: id op_assign INT_EXPR>\n");
+
+																		printf("\t\t%s %s\n", $<address>0.type, $1.addr);
+																		printf("\t\t%s = %s\n", $1.addr, $3.addr);
 
 																		addVar($1.addr, $3.addr, $<address>0.type);
 
@@ -392,7 +435,9 @@ VAR_LIST			:	VAR_LIST pt_comma id op_assign INT_EXPR		{
 																	}
 
 					|	id											{
-																		printf("\t%s %s\n", $<address>0.type, $1.addr);
+																		LOG_Y("B<VAR_LIST: id>\n");
+
+																		printf("\t\t%s %s\n", $<address>0.type, $1.addr);
 
 																		addVar($1.addr, "0", $<address>0.type);
 
@@ -402,60 +447,76 @@ VAR_LIST			:	VAR_LIST pt_comma id op_assign INT_EXPR		{
 
 
 INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
+																		LOG_Y("B<INT_EXPR: INT_EXPR op_mul INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s * %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s * %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_div INT_EXPR					{
+																		LOG_Y("B<INT_EXPR: INT_EXPR op_div INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s / %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s / %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_mod INT_EXPR					{
+																		LOG_Y("B<INT_EXPR: INT_EXPR op_mod INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s mod %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s mod %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_add INT_EXPR					{
+																		LOG_Y("B<INT_EXPR: INT_EXPR op_add INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s + %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s + %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_sub INT_EXPR					{
+																		LOG_Y("B<INT_EXPR: INT_EXPR op_sub INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s - %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s - %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	br_round_open INT_EXPR br_round_close		{
+																		LOG_Y("B<INT_EXPR: br_round_open INT_EXPR br_round_close>\n");
+
 																		$$.addr = $2.addr;
 																	}
 
 					|	op_sub INT_EXPR %prec op_uminus				{
+																		LOG_Y("B<INT_EXPR: op_sub INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = -%s\n", $$.addr, $2.addr);
+																		printf("\t\t%s = -%s\n", $$.addr, $2.addr);
 
 																		free($2.addr);
 																	}
 
 					|	op_add id									{
+																		LOG_Y("B<INT_EXPR: op_add id>\n");
+
 																		if(!isVarDefined($2.addr))
 																		{
-																			printf("** ERROR: variable %s is not defined. **\n", $2.addr);
+																			printf("\t** ERROR: variable %s is not defined. **\n", $2.addr);
 																			exit(-1);
 																		}
 
@@ -463,9 +524,11 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 																	}
 
 					|	id											{
+																		LOG_Y("B<INT_EXPR: id>\n");
+
 																		if(!isVarDefined($1.addr))
 																		{
-																			printf("** ERROR: variable %s is not defined. **\n", $1.addr);
+																			printf("\t** ERROR: variable %s is not defined. **\n", $1.addr);
 																			exit(-1);
 																		}
 
@@ -473,15 +536,19 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 																	}
 
 					|	op_add int_number							{
+																		LOG_Y("B<INT_EXPR: op_add int_number>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s\n", $$.addr, $2.addr);
+																		printf("\t\t%s = %s\n", $$.addr, $2.addr);
 
 																		free($2.addr);
 																	}
 
 					|	int_number									{
+																		LOG_Y("B<INT_EXPR: int_number>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s\n", $$.addr, $1.addr);
+																		printf("\t\t%s = %s\n", $$.addr, $1.addr);
 
 																		free($1.addr);
 																	}
@@ -489,114 +556,177 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 
 
 BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
+																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_and BOOL_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s AND %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s AND %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	BOOL_EXPR op_or BOOL_EXPR					{
+																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_or BOOL_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s OR %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s OR %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	BOOL_EXPR op_xor BOOL_EXPR					{
+																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_xor BOOL_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s XOR %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s XOR %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	op_not BOOL_EXPR							{
+																		LOG_Y("B<BOOL_EXPR: op_not BOOL_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = NOT %s\n", $$.addr, $2.addr);
+																		printf("\t\t%s = NOT %s\n", $$.addr, $2.addr);
 
 																		free($2.addr);
 																	}
 
 					|	BOOL_EXPR op_eq BOOL_EXPR					{
+																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_eq BOOL_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s == %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s == %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	BOOL_EXPR op_ne BOOL_EXPR					{
+																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_ne BOOL_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s != %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s != %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_eq INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_eq INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s == %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s == %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_ne INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_ne INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s != %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s != %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_lt INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_lt INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s < %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s < %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_le INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_le INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s <= %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s <= %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_gt INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_gt INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s > %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s > %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
 					|	INT_EXPR op_ge INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_ge INT_EXPR>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = %s >= %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s >= %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 				
 					|	br_round_open BOOL_EXPR br_round_close		{
+																		LOG_Y("B<BOOL_EXPR: br_round_open BOOL_EXPR br_round_close>\n");
+
 																		$$.addr = $2.addr;
 																	}
 
 					|	kw_false									{
+																		LOG_Y("B<BOOL_EXPR: kw_false>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = FALSE\n", $$.addr);
+																		printf("\t\t%s = FALSE\n", $$.addr);
 																	}
 
 					|	kw_true										{
+																		LOG_Y("B<BOOL_EXPR: kw_true>\n");
+
 																		$$.addr = next_var_name();
-																		printf("\t%s = TRUE\n", $$.addr);
+																		printf("\t\t%s = TRUE\n", $$.addr);
 																	}
 
+					;
+
+
+STRING_EXPR			:	STRING_EXPR op_add STRING_EXPR				{
+																		LOG_Y("B<STRING_EXPR: STRING_EXPR op_add STRING_EXPR>\n");
+
+																		int c1 = strlen($1.addr);
+																		int c2 = strlen($3.addr);
+
+																		$$.addr = (char*) malloc(sizeof(char) * (c1 + c2));
+																		memset($$.addr, 0, sizeof(char) * (c1 + c2));
+
+																		strcat($$.addr, $1.addr);
+																		strcat($$.addr, $3.addr);
+																	}
+
+					|	string										{
+																		LOG_Y("B<STRING_EXPR: string>\n");
+
+																		$$.addr = $1.addr;
+																	}
+
+					|	INT_EXPR									{
+																		LOG_Y("B<STRING_EXPR: INT_EXPR>\n");
+
+																		$$.addr = $1.addr;
+																	}
+
+					|	BOOL_EXPR									{
+																		LOG_Y("B<STRING_EXPR: BOOL_EXPR>\n");
+
+																		$$.addr = $1.addr;
+																	}
 					;
 
 
@@ -604,7 +734,11 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 
 int main()
 {
+	//Set to 1 to enable Bison own debug trace output (will clutter the output also with Bison internal debug data, which is useless for us).
+	//Set to 0 to disable it.
 	yydebug = 0;
+
+	printf("\n\t<START>\n");	
 
 	if (yyparse() != 0)
 		fprintf(stderr, "Abnormal exit.");
