@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include "uthash.h"
 
 int yylex();
@@ -13,18 +12,46 @@ int label_counter = 1;
 
 // Function to create next temporary variable
 char* next_var() {
-    static char var[5];
-    sprintf(var, "t%d", var_counter);
+    
+    int digits = 0;
+	int value = var_counter;
+	while (value != 0) {
+		value /= 10;
+		digits++;
+	}
+
+	char* buffer = (char*) malloc(sizeof(char) * (digits+1));
+	if (buffer == NULL){
+        printf("Unable to allocate heap memory.");
+        exit(-1);
+    }
+        
+    sprintf(buffer, "t%d", var_counter);
     var_counter++;
-    return var;
+
+    return buffer;
 }
 
 // Function to create next label
 char* next_label() {
-    static char label[5];
-    sprintf(label, "L%d", label_counter);
+    
+    int digits = 0;
+	int value = label_counter;
+	while (value != 0) {
+		value /= 10;
+		digits++;
+	}
+
+	char* buffer = (char*) malloc(sizeof(char) * (digits+1));
+	if (buffer == NULL){
+        printf("Unable to allocate heap memory.");
+        exit(-1);
+    }
+
+    sprintf(buffer, "L%d", label_counter);
     label_counter++;
-    return label;
+    
+    return buffer;
 }
 
 typedef struct variable {
@@ -118,272 +145,281 @@ int isVarDefined(char* id){
     } address;
 }
 
-%token <address> NUMBER
-%token <address> ID
+%token <address> number
+%token <address> id
 
-%token KW_INT
-%token KW_IF
-%token KW_ELSE
-%token KW_WHILE
-%token KW_FALSE
-%token KW_TRUE
-%token KW_PRINT
+%token kw_int
+%token kw_if
+%token kw_else
+%token kw_while
+%token kw_false
+%token kw_true
+%token kw_print
 
-%token OP_ADD
-%token OP_SUB
-%token OP_MUL
-%token OP_DIV
+%token op_add
+%token op_sub
+%token op_mul
+%token op_div
 
-%token OP_LT
-%token OP_LE
-%token OP_EQ
-%token OP_NEQ
-%token OP_GT
-%token OP_GE
+%token op_lt
+%token op_le
+%token op_eq
+%token op_neq
+%token op_gt
+%token op_ge
+%token op_increment
+%token op_decrement
 
-%token OP_AND
-%token OP_OR
-%token OP_XOR
-%token OP_NOT
+%token op_and
+%token op_or
+%token op_xor
+%token op_not
 
-%token OP_ASSIGN
+%token op_assign
 
-%token BR_ROUND_OPEN
-%token BR_ROUND_CLOSE
-%token BR_CURLY_OPEN
-%token BR_CURLY_CLOSE
+%token br_round_open
+%token br_round_close
+%token br_curly_open
+%token br_curly_close
 
-%token SEMICOLON
-%token COMMA
+%token pt_semicolon
+%token pt_comma
 
-%type <address> bool_expr
-%type <address> int_expr
-%type <address> type
-%type <address> var_list
-%type <address> stmt
-%type <address> stmt_list
-%type <address> program
-%type <address> M
-%type <address> P
 
-%left OP_ADD OP_SUB
-%left OP_MUL OP_DIV
-%right OP_UMINUS
+%type <address> PROGRAM
+%type <address> STMT_LIST
+%type <address> BLOCK
+%type <address> STMT
+%type <address> VAR_TYPE
+%type <address> VAR_LIST
+%type <address> START_IF_STMT
+%type <address> DUMMY_IF
+%type <address> DUMMY_WHILE
+%type <address> BOOL_EXPR
+%type <address> INT_EXPR
 
-%right OP_EQ OP_NEQ
-%left OP_OR OP_XOR
-%left OP_AND
-%right OP_NOT
-%nonassoc OP_LT OP_LE OP_GT OP_GE
+%left op_add op_sub
+%left op_mul op_div
+%right op_uminus
+
+%right op_assign
+
+%right op_eq op_neq
+%left op_or op_xor
+%left op_and
+%right op_not
+%nonassoc op_lt op_le op_gt op_ge
 
 %%
 
-program			:	stmt_list					                            { printf("end\n"); }
+PROGRAM			    :	STMT_LIST					                                    { printf("end\n"); }
 
-stmt_list       :   stmt stmt_list                                          { }                                     
-                |   /* empty */                                             { }                     
-                ;
+STMT_LIST           :   STMT STMT_LIST                                                  { }                                     
+                    |   /* empty */                                                     { }                     
+                    ;
 
-stmt            :   type var_list SEMICOLON                                 { }
+BLOCK               :   STMT                                                            { }
+                    |   br_curly_open STMT_LIST br_curly_close                          { }
+                    ;
 
-                |   ID OP_ASSIGN int_expr SEMICOLON                         { 
-                                                                                setVarAddr($1.addr, $3.addr);
-                                                                                printf("%s = %s\n", $1.addr, $3.addr); 
-                                                                            }
-                |   KW_PRINT BR_ROUND_OPEN ID BR_ROUND_CLOSE SEMICOLON      { printf("print(%s)\n", $3.addr); }
+STMT                :   VAR_TYPE VAR_LIST pt_semicolon                                  { }
 
-                |   M KW_IF BR_ROUND_OPEN bool_expr N BR_ROUND_CLOSE O L KW_ELSE { $1.next = strdup(next_label()); printf("goto %s\n", $1.next); printf("%s : ", $1.false_label); } L { printf("%s : ", $1.next); }
+                    |   id op_assign INT_EXPR pt_semicolon                              { 
+                                                                                            setVarAddr($1.addr, $3.addr);
+                                                                                            printf("%s = %s\n", $1.addr, $3.addr); 
+                                                                                        }
+                    
+                    |   id op_increment pt_semicolon                                    {
+                                                                                            char* temp = next_var();
+                                                                                            setVarAddr($1.addr, temp);
+                                                                                            printf("%s = %s + 1\n", temp, $1.addr);
+                                                                                            printf("%s = %s\n", $1.addr, temp);
+                                                                                        }
 
-                |   M KW_IF BR_ROUND_OPEN bool_expr N BR_ROUND_CLOSE O L { printf("%s : ", $1.next); }
+                    |   id op_decrement pt_semicolon                                    {
+                                                                                            char* temp = next_var();
+                                                                                            setVarAddr($1.addr, temp);
+                                                                                            printf("%s = %s - 1\n", temp, $1.addr);
+                                                                                            printf("%s = %s\n", $1.addr, temp);
+                                                                                        }
 
-                |   P KW_WHILE BR_ROUND_OPEN bool_expr N BR_ROUND_CLOSE O L { printf("goto %s\n", $1.begin); printf("%s : ", $1.next); }
-                ;
+                    |   kw_print br_round_open INT_EXPR br_round_close pt_semicolon     {
+                                                                                            printf("print(%s)\n", $3.addr);
+                                                                                        }
 
-L               :   stmt                                                    { }
-                |   BR_CURLY_OPEN stmt_list BR_CURLY_CLOSE                  { }
-                ;
+                    |	kw_print br_round_open BOOL_EXPR br_round_close pt_semicolon    {
+                                                                                            printf("print(%s)\n", $3.addr);
+                                                                                        }
 
-M               :   {
-                        char* next = strdup(next_label());
-                        $$.next = next;
-                        $$.true_label = strdup(next_label());
-                        $$.false_label = next;
-                    }
+                    |   START_IF_STMT kw_else { $1.next = next_label(); printf("goto %s\n", $1.next); printf("%s : ", $1.false_label); } BLOCK { printf("%s : ", $1.next); }
 
-N               :   {
-                        printf("if %s goto %s\n", $<address>0.addr, $<address>-3.true_label);
-                        printf("goto %s\n", $<address>-3.false_label);
-                    }
+                    |   START_IF_STMT { printf("%s : ", $1.next); }
 
-O               :   {
-                        printf("%s : ", $<address>-5.true_label);
-                    }
+                    |   DUMMY_WHILE kw_while br_round_open BOOL_EXPR br_round_close PRINT_IF_EXPR BLOCK { printf("goto %s\n", $1.begin); printf("%s : ", $1.next); }
+                    ;
 
-P               :   { 
-                        char* next = strdup(next_label());
-                        $$.next = next;
-                        char* begin = strdup(next_label());
-                        $$.begin = begin;
-                        $$.true_label = strdup(next_label()); 
-                        $$.false_label = next;
-                        printf("%s : ", begin);
-                    }
-
+START_IF_STMT       :   DUMMY_IF kw_if br_round_open BOOL_EXPR br_round_close PRINT_IF_EXPR BLOCK   {
+                                                                                                        $$.next = $1.next;
+                                                                                                        $$.true_label = $1.true_label;
+                                                                                                        $$.false_label = $1.false_label;
+                                                                                                    }
 
 
-type            :   KW_INT                                      { 
-                                                                    $$.type = strdup("int"); 
-                                                                }
-                ;
+DUMMY_IF            :   {
+                            char* next = next_label();
+                            $$.next = next;
+                            $$.true_label = next_label();
+                            $$.false_label = next;
+                        }
 
-var_list        :   var_list COMMA ID                           {
-                                                                    addVar($3.addr, "0", $<address>0.type);
-                                                                    printf("%s %s\n", $<address>0.type, $3.addr);
-                                                                }
-                |   var_list COMMA ID OP_ASSIGN int_expr        {
-                                                                    addVar($3.addr, $5.addr, $<address>0.type);
-                                                                    printf("%s %s\n", $<address>0.type, $3.addr);
-                                                                    printf("%s = %s\n", $3.addr, $5.addr);
-                                                                }
-                |   ID OP_ASSIGN int_expr                       {
-                                                                    addVar($1.addr, $3.addr, $<address>0.type);
-                                                                    printf("%s %s\n", $<address>0.type, $1.addr);
-                                                                    printf("%s = %s\n", $1.addr, $3.addr);
-                                                                }
-                |   ID                                          {
-                                                                    addVar($1.addr, "0", $<address>0.type);
-                                                                    printf("%s %s\n", $<address>0.type, $1.addr);
-                                                                }
-                ;
+DUMMY_WHILE         :   { 
+                            char* next = next_label();
+                            $$.next = next;
+                            char* begin = next_label();
+                            $$.begin = begin;
+                            $$.true_label = next_label(); 
+                            $$.false_label = next;
+                            printf("%s : ", begin);
+                        }
 
-bool_expr		:	bool_expr OP_AND bool_expr					{ 
-																	char* temp = next_var();
-                                                                    printf("%s = %s AND %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	bool_expr OP_OR bool_expr					{ 
-																	char* temp = next_var();
-                                                                    printf("%s = %s OR %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	bool_expr OP_XOR bool_expr					{
-																	char* temp = next_var();
-                                                                    printf("%s = %s XOR %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	OP_NOT bool_expr							{ 
-																	char* temp = next_var();
-                                                                    printf("%s = NOT %s\n", temp, $2.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	bool_expr OP_EQ bool_expr					{
-																	char* temp = next_var();
-                                                                    printf("%s = %s EQUAL %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	bool_expr OP_NEQ bool_expr					{
-																	char* temp = next_var();
-                                                                    printf("%s = %s NOT EQUAL %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	BR_ROUND_OPEN bool_expr BR_ROUND_CLOSE		{ 
-																	$$.addr = strdup($2.addr);
-																}
-				|	int_expr OP_LT int_expr						{  
-																	char* temp = next_var();
-                                                                    printf("%s = %s < %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	int_expr OP_LE int_expr						{  
-																	char* temp = next_var();
-                                                                    printf("%s = %s <= %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	int_expr OP_GE int_expr						{  
-																	char* temp = next_var();
-                                                                    printf("%s = %s >= %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	int_expr OP_GT int_expr						{  
-																	char* temp = next_var();
-                                                                    printf("%s = %s > %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}	
-				|	int_expr OP_EQ int_expr						{  
-																	char* temp = next_var();
-                                                                    printf("%s = %s EQUAL %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	int_expr OP_NEQ int_expr					{  
-																	char* temp = next_var();
-                                                                    printf("%s = %s NOT EQUAL %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-																}
-				|	KW_TRUE										{
-                                                                    char* temp = next_var();
-                                                                    printf("%s = TRUE\n", temp);
-                                                                    $$.addr = strdup(temp);  
-																}	
-				|	KW_FALSE									{
-																	char* temp = next_var();
-                                                                    printf("%s = FALSE\n", temp);
-                                                                    $$.addr = strdup(temp);  
-																}																														
-				;
+PRINT_IF_EXPR       :   {
+                            printf("if %s goto %s\n", $<address>-1.addr, $<address>-4.true_label); 
+                            printf("goto %s\n", $<address>-4.false_label); 
+                            printf("%s : ", $<address>-4.true_label);
+                        }
 
-int_expr		:	int_expr OP_MUL int_expr					{   
-                                                                    char* temp = next_var();
-                                                                    printf("%s = %s * %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-                                                                }
-				|	int_expr OP_DIV int_expr					{   
-                                                                    char* temp = next_var();
-                                                                    printf("%s = %s / %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-                                                                }
-				|	int_expr OP_ADD int_expr					{   
-                                                                    char* temp = next_var();
-                                                                    printf("%s = %s + %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp);  
-                                                                }
-				|	int_expr OP_SUB int_expr					{   
-                                                                    char* temp = next_var();
-                                                                    printf("%s = %s - %s\n", temp, $1.addr, $3.addr);
-                                                                    $$.addr = strdup(temp); 
-                                                                }
-
-				|	BR_ROUND_OPEN int_expr BR_ROUND_CLOSE		{ $$.addr = strdup($2.addr); }
-
-				|	OP_SUB int_expr %prec OP_UMINUS				{ 
-                                                                    char* temp = next_var();
-                                                                    printf("%s = -%s\n", temp, $2.addr);
-                                                                    $$.addr = strdup(temp); 
-                                                                }
-                |   OP_ADD  ID                                  {
-                                                                    if(!isVarDefined($2.addr)){
-                                                                        printf("ERROR : variable %s is not defined\n", $2.addr);
-                                                                        exit(-1);
+VAR_TYPE            :   kw_int                                      { 
+                                                                        $$.type = strdup("int"); 
                                                                     }
-                                                                    $$.addr = strdup($2.addr);
-                                                                }
-				|	OP_ADD	NUMBER								{ 
-                                                                    char* temp = next_var();
-                                                                    printf("%s = %s\n", temp, $2.addr);
-                                                                    $$.addr = strdup(temp);  
-                                                                }
-                |   ID                                          {
-                                                                    if(!isVarDefined($1.addr)){
-                                                                        printf("ERROR : variable %s is not defined\n", $1.addr);
-                                                                        exit(-1);
+                    ;
+
+VAR_LIST            :   VAR_LIST pt_comma id                        {
+                                                                        addVar($3.addr, "0", $<address>0.type);
+                                                                        printf("%s %s\n", $<address>0.type, $3.addr);
                                                                     }
-                                                                    $$.addr = strdup($1.addr);
-                                                                }
-				|	NUMBER										{   
-                                                                    char* temp = next_var();
-                                                                    printf("%s = %s\n", temp, $1.addr);
-                                                                    $$.addr = strdup(temp);  
-                                                                }
-				;
+                    |   VAR_LIST pt_comma id op_assign INT_EXPR     {
+                                                                        addVar($3.addr, $5.addr, $<address>0.type);
+                                                                        printf("%s %s\n", $<address>0.type, $3.addr);
+                                                                        printf("%s = %s\n", $3.addr, $5.addr);
+                                                                    }
+                    |   id op_assign INT_EXPR                       {
+                                                                        addVar($1.addr, $3.addr, $<address>0.type);
+                                                                        printf("%s %s\n", $<address>0.type, $1.addr);
+                                                                        printf("%s = %s\n", $1.addr, $3.addr);
+                                                                    }
+                    |   id                                          {
+                                                                        addVar($1.addr, "0", $<address>0.type);
+                                                                        printf("%s %s\n", $<address>0.type, $1.addr);
+                                                                    }
+                    ;
+
+BOOL_EXPR		    :	BOOL_EXPR op_and BOOL_EXPR					{ 
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s AND %s\n", $$.addr, $1.addr, $3.addr);                                                                     
+                                                                    }
+                    |	BOOL_EXPR op_or BOOL_EXPR					{ 
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s OR %s\n", $$.addr, $1.addr, $3.addr);                                                                     
+                                                                    }
+                    |	BOOL_EXPR op_xor BOOL_EXPR					{
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s XOR %s\n", $$.addr, $1.addr, $3.addr);                                                                     
+                                                                    }
+                    |	op_not BOOL_EXPR							{ 
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = NOT %s\n", $$.addr, $2.addr);                                                                     
+                                                                    }
+                    |	BOOL_EXPR op_eq BOOL_EXPR					{
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s EQUAL %s\n", $$.addr, $1.addr, $3.addr);                                                                     
+                                                                    }
+                    |	BOOL_EXPR op_neq BOOL_EXPR					{
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s NOT EQUAL %s\n", $$.addr, $1.addr, $3.addr);                                                                     
+                                                                    }
+                    |	br_round_open BOOL_EXPR br_round_close		{ 
+                                                                        $$.addr = $2.addr;
+                                                                    }
+                    |	INT_EXPR op_lt INT_EXPR						{  
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s < %s\n", $$.addr, $1.addr, $3.addr);                                                                    
+                                                                    }
+                    |	INT_EXPR op_le INT_EXPR						{  
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s <= %s\n", $$.addr, $1.addr, $3.addr);                                                                  
+                                                                    }
+                    |	INT_EXPR op_ge INT_EXPR						{  
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s >= %s\n", $$.addr, $1.addr, $3.addr);      
+                                                                    }
+                    |	INT_EXPR op_gt INT_EXPR						{  
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s > %s\n", $$.addr, $1.addr, $3.addr);                                                                     
+                                                                    }	
+                    |	INT_EXPR op_eq INT_EXPR						{  
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s EQUAL %s\n", $$.addr, $1.addr, $3.addr);   
+                                                                    }
+                    |	INT_EXPR op_neq INT_EXPR					{  
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s NOT EQUAL %s\n", $$.addr, $1.addr, $3.addr);   
+                                                                    }
+                    |	kw_true										{
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = TRUE\n", $$.addr);   
+                                                                    }	
+                    |	kw_false									{
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = FALSE\n", $$.addr);           
+                                                                    }																														
+                    ;
+
+INT_EXPR		    :	INT_EXPR op_mul INT_EXPR					{   
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s * %s\n", $$.addr, $1.addr, $3.addr);  
+                                                                    }
+                    |	INT_EXPR op_div INT_EXPR					{   
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s / %s\n", $$.addr, $1.addr, $3.addr);                                                                     
+                                                                    }
+                    |	INT_EXPR op_add INT_EXPR					{   
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s + %s\n", $$.addr, $1.addr, $3.addr);                                                                    
+                                                                    }
+                    |	INT_EXPR op_sub INT_EXPR					{   
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s - %s\n", $$.addr, $1.addr, $3.addr);                                                                   
+                                                                    }
+
+                    |	br_round_open INT_EXPR br_round_close		{ $$.addr = $2.addr; }
+
+                    |	op_sub INT_EXPR %prec op_uminus				{ 
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = -%s\n", $$.addr, $2.addr);                                                                    
+                                                                    }
+                    |   op_add  id                                  {
+                                                                        if(!isVarDefined($2.addr)){
+                                                                            printf("ERROR : variable %s is not defined\n", $2.addr);
+                                                                            exit(-1);
+                                                                        }
+                                                                        $$.addr = $2.addr;
+                                                                    }                 
+                    |	op_add	number								{ 
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s\n", $$.addr, $2.addr); 
+                                                                    }
+                    |   id                                          {
+                                                                        if(!isVarDefined($1.addr)){
+                                                                            printf("ERROR : variable %s is not defined\n", $1.addr);
+                                                                            exit(-1);
+                                                                        }
+                                                                        $$.addr = $1.addr;
+                                                                    }
+                    |	number										{   
+                                                                        $$.addr = next_var();
+                                                                        printf("%s = %s\n", $$.addr, $1.addr); 
+                                                                    }
+                    ;
 
 %%
 

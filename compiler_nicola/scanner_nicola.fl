@@ -10,7 +10,7 @@
 #include "compiler_nicola.tab.h"
 %}
 
-delim                   [ \t\n]
+delim                   [ \t\n\r]
 ws                      {delim}+
 letter                  [A-Za-z]
 digit                   [0-9]
@@ -27,13 +27,13 @@ if                      {
 								printf("<keyword, IF>\n"); 
 							#endif
 
-							return KW_IF; 
+							return kw_if; 
 						}
 else                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<keyword, ELSE>\n"); 
 							#endif
-							return KW_ELSE; 
+							return kw_else; 
 						}
 do                      { 
 							#ifdef PROJECT_LOGGING
@@ -44,7 +44,7 @@ while                   {
 							#ifdef PROJECT_LOGGING
 								printf("<keyword, WHILE>\n"); 
 							#endif
-							return KW_WHILE; 
+							return kw_while; 
 						}
 for                     { 
 							#ifdef PROJECT_LOGGING
@@ -55,7 +55,7 @@ int                     {
 							#ifdef PROJECT_LOGGING
 								printf("<keyword, INT>\n"); 
 							#endif
-							return KW_INT; 
+							return kw_int; 
 						}
 return                  { 
 							#ifdef PROJECT_LOGGING
@@ -66,7 +66,7 @@ print					{
 							#ifdef PROJECT_LOGGING
 								printf("<keyword, PRINT>\n"); 
 							#endif 
-							return KW_PRINT;
+							return kw_print;
 						}
 <<EOF>>        			{
 							#ifdef PROJECT_LOGGING
@@ -79,13 +79,13 @@ print					{
 							#ifdef PROJECT_LOGGING
 								printf("<keyword, TRUE>\n"); 
 							#endif
-							return KW_TRUE; 
+							return kw_true; 
 						}
 "false"|"FALSE"			{ 
 							#ifdef PROJECT_LOGGING
 								printf("<keyword, FALSE>\n"); 
 							#endif
-							return KW_FALSE; 
+							return kw_false; 
 						}
 
 "//"[^\n]*              {}   /* eat up one-line comments */
@@ -106,62 +106,74 @@ print					{
 							#ifdef PROJECT_LOGGING
 								printf("<operator, LT>\n"); 
 							#endif
-							return OP_LT; 
+							return op_lt; 
 						}
 "<="                    { 	
 							#ifdef PROJECT_LOGGING
 								printf("<operator, LE>\n"); 
 							#endif
-							return OP_LE; 
+							return op_le; 
 						}
 "=="                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, EQ>\n"); 
 							#endif
-							return OP_EQ; 
+							return op_eq; 
 						}
 "!="                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, NEQ>\n"); 
 							#endif
-							return OP_NEQ; 
+							return op_neq; 
 						}
 ">"                     { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, GT>\n"); 
 							#endif
-							return OP_GT; 
+							return op_gt; 
 						}
 ">="                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, GE>\n"); 
 							#endif
-							return OP_GE; 
+							return op_ge; 
 						}
 
 "+"	                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, ADDITION>\n"); 
 							#endif
-							return OP_ADD;
+							return op_add;
+						}
+"++"					{
+							#ifdef PROJECT_LOGGING
+								printf("<operator, INCREMENT>\n"); 
+							#endif
+							return op_increment;
 						}
 "-"	                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, SUBTRACTION>\n"); 
 							#endif
-							return OP_SUB;
+							return op_sub;
+						}
+"--"					{
+							#ifdef PROJECT_LOGGING
+								printf("<operator, DECREMENT>\n"); 
+							#endif
+							return op_decrement;
 						}
 "*"	                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, MULTIPLICATION>\n"); 
 							#endif
-							return OP_MUL;
+							return op_mul;
 						}
 "/"	                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, DIVISION>\n"); 
 							#endif
-							return OP_DIV;
+							return op_div;
 						}
 "%"                     { 
 							#ifdef PROJECT_LOGGING
@@ -173,32 +185,32 @@ print					{
 							#ifdef PROJECT_LOGGING
 								printf("<operator, ASSIGNMENT>\n"); 
 							#endif
-							return OP_ASSIGN; 
+							return op_assign; 
 						}
 
 "and"|"AND"             { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, AND>\n"); 
 							#endif
-							return OP_AND; 
+							return op_and; 
 						}
 "or"|"OR"               { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, OR>\n"); 
 							#endif
-							return OP_OR; 
+							return op_or; 
 						}
 "not"|"NOT"             { 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, NOT>\n"); 
 							#endif
-							return OP_NOT; 
+							return op_not; 
 						}
 "xor"|"XOR"				{ 
 							#ifdef PROJECT_LOGGING
 								printf("<operator, XOR>\n"); 
 							#endif
-							return OP_XOR; 
+							return op_xor; 
 						}
 
 "&"					    { 
@@ -236,42 +248,42 @@ print					{
 							#ifdef PROJECT_LOGGING
 								printf("<bracket, OPEN ROUND BRACKET>\n"); 
 							#endif
-							return BR_ROUND_OPEN;
+							return br_round_open;
 						}
 ")"	                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<bracket, CLOSE ROUND BRACKET>\n"); 
 							#endif
-							return BR_ROUND_CLOSE;
+							return br_round_close;
 						}
 "{"	                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<bracket, OPEN CURLY BRACKET>\n"); 
 							#endif
-							return BR_CURLY_OPEN;
+							return br_curly_open;
 						}
 "}"	                    { 
 							#ifdef PROJECT_LOGGING
 								printf("<bracket, CLOSE CURLY BRACKET>\n"); 
 							#endif
-							return BR_CURLY_CLOSE;
+							return br_curly_close;
 						}
 
 ";"	                    { 
 							#ifdef PROJECT_LOGGING
-								printf("<semicolon, >\n"); 
+								printf("<punctuation, SEMICOLON>\n"); 
 							#endif
-							return SEMICOLON;
+							return pt_semicolon;
 						}
 ","                     { 
 							#ifdef PROJECT_LOGGING
-								printf("<comma, >\n"); 
+								printf("<punctuation, COMMA>\n"); 
 							#endif
-							return COMMA; 
+							return pt_comma; 
 						}
 ":"                     { 
 							#ifdef PROJECT_LOGGING
-								printf("<colon, >\n"); 
+								printf("<punctuation, COLON>\n"); 
 							#endif
 						}
 
@@ -280,14 +292,14 @@ print					{
 							#ifdef PROJECT_LOGGING
 								printf("<id, %s>\n", yytext); 
 							#endif
-							return ID;
+							return id;
 						}
 {number}                {
 							yylval.address.addr = strdup(yytext);
 							#ifdef PROJECT_LOGGING
 								printf("<number, %s>\n", yytext); 
 							#endif
-						    return NUMBER;
+						    return number;
 						}
 .                       { 
 							#ifdef PROJECT_LOGGING
