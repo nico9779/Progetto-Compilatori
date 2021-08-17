@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ut_compiler_marco.tab.h"
+#include "compiler.tab.h"
 
 
 //Logging function.
