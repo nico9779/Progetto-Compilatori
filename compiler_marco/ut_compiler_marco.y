@@ -578,7 +578,157 @@ VAR_LIST			:	VAR_LIST pt_comma id op_assign INT_EXPR		{
 					;
 
 
-INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
+INT_EXPR			:	br_round_open INT_EXPR br_round_close		{
+																		LOG_Y("B<INT_EXPR: br_round_open INT_EXPR br_round_close>\n");
+
+																		$$.addr = $2.addr;
+																	}
+
+					|	id op_inc									{
+																		LOG_Y("B<INT_EXPR: id op_inc>\n");
+
+																		if(!isVarDefined($1.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $1.addr);
+																			exit(-1);
+																		}
+
+																		char* old_var = next_var_name();
+																		char* new_var = next_var_name();
+																		setVarAddr($1.addr, new_var);
+
+																		$$.addr = old_var;
+
+																		printf("\t\t%s = %s\n", old_var, $1.addr);
+																		printf("\t\t%s = %s + 1\n", new_var, $1.addr);
+																		printf("\t\t%s = %s\n", $1.addr, new_var);
+
+																		//free($1.addr);
+																	}
+
+					|	id op_dec									{
+																		LOG_Y("B<INT_EXPR: id op_dec>\n");
+
+																		if(!isVarDefined($1.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $1.addr);
+																			exit(-1);
+																		}
+
+																		char* old_var = next_var_name();
+																		char* new_var = next_var_name();
+																		setVarAddr($1.addr, new_var);
+
+																		$$.addr = old_var;
+
+																		printf("\t\t%s = %s\n", old_var, $1.addr);
+																		printf("\t\t%s = %s - 1\n", new_var, $1.addr);
+																		printf("\t\t%s = %s\n", $1.addr, new_var);
+
+																		//free($1.addr);
+																	}
+
+					|	op_inc id									{
+																		LOG_Y("B<INT_EXPR: op_inc id>\n");
+
+																		if(!isVarDefined($2.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $2.addr);
+																			exit(-1);
+																		}
+
+																		char* new_var = next_var_name();
+																		setVarAddr($2.addr, new_var);
+
+																		$$.addr = $2.addr;
+																		
+																		printf("\t\t%s = %s + 1\n", new_var, $2.addr);
+																		printf("\t\t%s = %s\n", $2.addr, new_var);
+
+																		//free($1.addr);
+																	}
+
+					|	op_dec id									{
+																		LOG_Y("B<INT_EXPR: op_dec id>\n");
+
+																		if(!isVarDefined($2.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $2.addr);
+																			exit(-1);
+																		}
+
+																		char* new_var = next_var_name();
+																		setVarAddr($2.addr, new_var);
+
+																		$$.addr = $2.addr;
+
+																		printf("\t\t%s = %s - 1\n", new_var, $2.addr);
+																		printf("\t\t%s = %s\n", $2.addr, new_var);
+
+																		//free($1.addr);
+																	}
+
+					|	op_add id									{
+																		LOG_Y("B<INT_EXPR: op_add id>\n");
+
+																		if(!isVarDefined($2.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $2.addr);
+																			exit(-1);
+																		}
+
+																		$$.addr = $2.addr;
+																	}
+
+					|	id											{
+																		LOG_Y("B<INT_EXPR: id>\n");
+
+																		if(!isVarDefined($1.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $1.addr);
+																			exit(-1);
+																		}
+
+																		$$.addr = $1.addr;
+																	}
+
+					|	op_add int_number							{
+																		LOG_Y("B<INT_EXPR: op_add int_number>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = %s\n", $$.addr, $2.addr);
+
+																		free($2.addr);
+																	}
+
+					|	int_number									{
+																		LOG_Y("B<INT_EXPR: int_number>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = %s\n", $$.addr, $1.addr);
+
+																		free($1.addr);
+																	}
+
+					|	op_sub INT_EXPR %prec op_uminus				{
+																		LOG_Y("B<INT_EXPR: op_sub INT_EXPR>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = -%s\n", $$.addr, $2.addr);
+
+																		free($2.addr);
+																	}
+
+					|	op_inv INT_EXPR								{
+																		LOG_Y("B<INT_EXPR: op_inv INT_EXPR>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = ~%s\n", $$.addr, $2.addr);
+
+																		free($2.addr);
+																	}
+
+					|	INT_EXPR op_mul INT_EXPR					{
 																		LOG_Y("B<INT_EXPR: INT_EXPR op_mul INT_EXPR>\n");
 
 																		$$.addr = next_var_name();
@@ -647,187 +797,27 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 																		free($1.addr);
 																		free($3.addr);
 																	}
-
-					|	br_round_open INT_EXPR br_round_close		{
-																		LOG_Y("B<INT_EXPR: br_round_open INT_EXPR br_round_close>\n");
-
-																		$$.addr = $2.addr;
-																	}
-
-					|	op_sub INT_EXPR %prec op_uminus				{
-																		LOG_Y("B<INT_EXPR: op_sub INT_EXPR>\n");
-
-																		$$.addr = next_var_name();
-																		printf("\t\t%s = -%s\n", $$.addr, $2.addr);
-
-																		free($2.addr);
-																	}
-
-					|	op_inv INT_EXPR								{
-																		LOG_Y("B<INT_EXPR: op_inv INT_EXPR>\n");
-
-																		$$.addr = next_var_name();
-																		printf("\t\t%s = ~%s\n", $$.addr, $2.addr);
-
-																		free($2.addr);
-																	}
-
-					|	op_inc id									{
-																		LOG_Y("B<INT_EXPR: op_inc id>\n");
-
-																		if(!isVarDefined($2.addr))
-																		{
-																			printf("\t** ERROR: variable %s is not defined. **\n", $2.addr);
-																			exit(-1);
-																		}
-
-																		char* new_var = next_var_name();
-																		setVarAddr($2.addr, new_var);
-
-																		$$.addr = $2.addr;
-																		
-																		printf("\t\t%s = %s + 1\n", new_var, $2.addr);
-																		printf("\t\t%s = %s\n", $2.addr, new_var);
-
-																		//free($1.addr);
-																	}
-
-					|	id op_inc									{
-																		LOG_Y("B<INT_EXPR: id op_inc>\n");
-
-																		if(!isVarDefined($1.addr))
-																		{
-																			printf("\t** ERROR: variable %s is not defined. **\n", $1.addr);
-																			exit(-1);
-																		}
-
-																		char* old_var = next_var_name();
-																		char* new_var = next_var_name();
-																		setVarAddr($1.addr, new_var);
-
-																		$$.addr = old_var;
-
-																		printf("\t\t%s = %s\n", old_var, $1.addr);
-																		printf("\t\t%s = %s + 1\n", new_var, $1.addr);
-																		printf("\t\t%s = %s\n", $1.addr, new_var);
-
-																		//free($1.addr);
-																	}
-
-					|	op_dec id									{
-																		LOG_Y("B<INT_EXPR: op_dec id>\n");
-
-																		if(!isVarDefined($2.addr))
-																		{
-																			printf("\t** ERROR: variable %s is not defined. **\n", $2.addr);
-																			exit(-1);
-																		}
-
-																		char* new_var = next_var_name();
-																		setVarAddr($2.addr, new_var);
-
-																		$$.addr = $2.addr;
-
-																		printf("\t\t%s = %s - 1\n", new_var, $2.addr);
-																		printf("\t\t%s = %s\n", $2.addr, new_var);
-
-																		//free($1.addr);
-																	}
-
-					|	id op_dec									{
-																		LOG_Y("B<INT_EXPR: id op_dec>\n");
-
-																		if(!isVarDefined($1.addr))
-																		{
-																			printf("\t** ERROR: variable %s is not defined. **\n", $1.addr);
-																			exit(-1);
-																		}
-
-																		char* old_var = next_var_name();
-																		char* new_var = next_var_name();
-																		setVarAddr($1.addr, new_var);
-
-																		$$.addr = old_var;
-
-																		printf("\t\t%s = %s\n", old_var, $1.addr);
-																		printf("\t\t%s = %s - 1\n", new_var, $1.addr);
-																		printf("\t\t%s = %s\n", $1.addr, new_var);
-
-																		//free($1.addr);
-																	}
-
-					|	op_add id									{
-																		LOG_Y("B<INT_EXPR: op_add id>\n");
-
-																		if(!isVarDefined($2.addr))
-																		{
-																			printf("\t** ERROR: variable %s is not defined. **\n", $2.addr);
-																			exit(-1);
-																		}
-
-																		$$.addr = $2.addr;
-																	}
-
-					|	id											{
-																		LOG_Y("B<INT_EXPR: id>\n");
-
-																		if(!isVarDefined($1.addr))
-																		{
-																			printf("\t** ERROR: variable %s is not defined. **\n", $1.addr);
-																			exit(-1);
-																		}
-
-																		$$.addr = $1.addr;
-																	}
-
-					|	op_add int_number							{
-																		LOG_Y("B<INT_EXPR: op_add int_number>\n");
-
-																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s\n", $$.addr, $2.addr);
-
-																		free($2.addr);
-																	}
-
-					|	int_number									{
-																		LOG_Y("B<INT_EXPR: int_number>\n");
-
-																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s\n", $$.addr, $1.addr);
-
-																		free($1.addr);
-																	}
 					;
 
 
-BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
-																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_and BOOL_EXPR>\n");
+BOOL_EXPR			:	br_round_open BOOL_EXPR br_round_close		{
+																		LOG_Y("B<BOOL_EXPR: br_round_open BOOL_EXPR br_round_close>\n");
 
-																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s AND %s\n", $$.addr, $1.addr, $3.addr);
-
-																		free($1.addr);
-																		free($3.addr);
+																		$$.addr = $2.addr;
 																	}
 
-					|	BOOL_EXPR op_or BOOL_EXPR					{
-																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_or BOOL_EXPR>\n");
+					|	kw_false									{
+																		LOG_Y("B<BOOL_EXPR: kw_false>\n");
 
 																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s OR %s\n", $$.addr, $1.addr, $3.addr);
-
-																		free($1.addr);
-																		free($3.addr);
+																		printf("\t\t%s = FALSE\n", $$.addr);
 																	}
 
-					|	BOOL_EXPR op_xor BOOL_EXPR					{
-																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_xor BOOL_EXPR>\n");
+					|	kw_true										{
+																		LOG_Y("B<BOOL_EXPR: kw_true>\n");
 
 																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s XOR %s\n", $$.addr, $1.addr, $3.addr);
-
-																		free($1.addr);
-																		free($3.addr);
+																		printf("\t\t%s = TRUE\n", $$.addr);
 																	}
 
 					|	op_not BOOL_EXPR							{
@@ -837,6 +827,46 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 																		printf("\t\t%s = NOT %s\n", $$.addr, $2.addr);
 
 																		free($2.addr);
+																	}
+
+					|	INT_EXPR op_lt INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_lt INT_EXPR>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = %s < %s\n", $$.addr, $1.addr, $3.addr);
+
+																		free($1.addr);
+																		free($3.addr);
+																	}
+
+					|	INT_EXPR op_le INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_le INT_EXPR>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = %s <= %s\n", $$.addr, $1.addr, $3.addr);
+
+																		free($1.addr);
+																		free($3.addr);
+																	}
+
+					|	INT_EXPR op_gt INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_gt INT_EXPR>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = %s > %s\n", $$.addr, $1.addr, $3.addr);
+
+																		free($1.addr);
+																		free($3.addr);
+																	}
+
+					|	INT_EXPR op_ge INT_EXPR						{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_ge INT_EXPR>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = %s >= %s\n", $$.addr, $1.addr, $3.addr);
+
+																		free($1.addr);
+																		free($3.addr);
 																	}
 
 					|	BOOL_EXPR op_eq BOOL_EXPR					{
@@ -879,66 +909,35 @@ BOOL_EXPR			:	BOOL_EXPR op_and BOOL_EXPR					{
 																		free($3.addr);
 																	}
 
-					|	INT_EXPR op_lt INT_EXPR						{
-																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_lt INT_EXPR>\n");
+					|	BOOL_EXPR op_xor BOOL_EXPR					{
+																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_xor BOOL_EXPR>\n");
 
 																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s < %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s XOR %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
-					|	INT_EXPR op_le INT_EXPR						{
-																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_le INT_EXPR>\n");
+					|	BOOL_EXPR op_and BOOL_EXPR					{
+																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_and BOOL_EXPR>\n");
 
 																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s <= %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s AND %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
 
-					|	INT_EXPR op_gt INT_EXPR						{
-																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_gt INT_EXPR>\n");
+					|	BOOL_EXPR op_or BOOL_EXPR					{
+																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_or BOOL_EXPR>\n");
 
 																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s > %s\n", $$.addr, $1.addr, $3.addr);
+																		printf("\t\t%s = %s OR %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);
 																	}
-
-					|	INT_EXPR op_ge INT_EXPR						{
-																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_ge INT_EXPR>\n");
-
-																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s >= %s\n", $$.addr, $1.addr, $3.addr);
-
-																		free($1.addr);
-																		free($3.addr);
-																	}
-				
-					|	br_round_open BOOL_EXPR br_round_close		{
-																		LOG_Y("B<BOOL_EXPR: br_round_open BOOL_EXPR br_round_close>\n");
-
-																		$$.addr = $2.addr;
-																	}
-
-					|	kw_false									{
-																		LOG_Y("B<BOOL_EXPR: kw_false>\n");
-
-																		$$.addr = next_var_name();
-																		printf("\t\t%s = FALSE\n", $$.addr);
-																	}
-
-					|	kw_true										{
-																		LOG_Y("B<BOOL_EXPR: kw_true>\n");
-
-																		$$.addr = next_var_name();
-																		printf("\t\t%s = TRUE\n", $$.addr);
-																	}
-
 					;
 
 
