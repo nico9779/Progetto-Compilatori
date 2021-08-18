@@ -278,18 +278,22 @@ void printSymbolTable()
 %type <address> BOOL_EXPR
 
 
-%left op_add op_sub
-%left op_mul op_div op_mod
+%nonassoc op_inc op_dec
 %right op_uminus op_inv
+%right op_not
 
-%nonassoc op_inc op_dec op_lsh op_rsh
-
-%right op_assign
+%left op_mul op_div op_mod
+%left op_add op_sub
+%left op_lsh op_rsh
 
 %nonassoc op_lt op_le op_gt op_ge
-%right op_eq op_ne
+%left op_eq op_ne
 %left op_and op_or op_xor
-%right op_not
+
+%nonassoc op_assign
+%nonassoc op_mul_assign op_div_assign op_mod_assign
+%nonassoc op_add_assign op_sub_assign
+
 
 
 %%
