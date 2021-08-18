@@ -672,6 +672,90 @@ INT_EXPR			:	INT_EXPR op_mul INT_EXPR					{
 																		free($2.addr);
 																	}
 
+					|	op_inc id									{
+																		LOG_Y("B<INT_EXPR: op_inc id>\n");
+
+																		if(!isVarDefined($2.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $2.addr);
+																			exit(-1);
+																		}
+
+																		char* new_var = next_var_name();
+																		setVarAddr($2.addr, new_var);
+
+																		$$.addr = $2.addr;
+																		
+																		printf("\t\t%s = %s + 1\n", new_var, $2.addr);
+																		printf("\t\t%s = %s\n", $2.addr, new_var);
+
+																		//free($1.addr);
+																	}
+
+					|	id op_inc									{
+																		LOG_Y("B<INT_EXPR: id op_inc>\n");
+
+																		if(!isVarDefined($1.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $1.addr);
+																			exit(-1);
+																		}
+
+																		char* old_var = next_var_name();
+																		char* new_var = next_var_name();
+																		setVarAddr($1.addr, new_var);
+
+																		$$.addr = old_var;
+
+																		printf("\t\t%s = %s\n", old_var, $1.addr);
+																		printf("\t\t%s = %s + 1\n", new_var, $1.addr);
+																		printf("\t\t%s = %s\n", $1.addr, new_var);
+
+																		//free($1.addr);
+																	}
+
+					|	op_dec id									{
+																		LOG_Y("B<INT_EXPR: op_dec id>\n");
+
+																		if(!isVarDefined($2.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $2.addr);
+																			exit(-1);
+																		}
+
+																		char* new_var = next_var_name();
+																		setVarAddr($2.addr, new_var);
+
+																		$$.addr = $2.addr;
+
+																		printf("\t\t%s = %s - 1\n", new_var, $2.addr);
+																		printf("\t\t%s = %s\n", $2.addr, new_var);
+
+																		//free($1.addr);
+																	}
+
+					|	id op_dec									{
+																		LOG_Y("B<INT_EXPR: id op_dec>\n");
+
+																		if(!isVarDefined($1.addr))
+																		{
+																			printf("\t** ERROR: variable %s is not defined. **\n", $1.addr);
+																			exit(-1);
+																		}
+
+																		char* old_var = next_var_name();
+																		char* new_var = next_var_name();
+																		setVarAddr($1.addr, new_var);
+
+																		$$.addr = old_var;
+
+																		printf("\t\t%s = %s\n", old_var, $1.addr);
+																		printf("\t\t%s = %s - 1\n", new_var, $1.addr);
+																		printf("\t\t%s = %s\n", $1.addr, new_var);
+
+																		//free($1.addr);
+																	}
+
 					|	op_add id									{
 																		LOG_Y("B<INT_EXPR: op_add id>\n");
 
