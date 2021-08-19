@@ -1,0 +1,142 @@
+%option noyywrap
+%{
+
+//Use it to enable debugging output, comment the line to disable it.
+//#define PROJECT_LOGGING
+
+
+#include <stdlib.h>
+#include <string.h>
+
+#include "compiler.tab.h"
+
+
+//Logging function.
+void LOG_FL(const char* name, const char* attr)
+{
+	#ifdef PROJECT_LOGGING
+		printf("F<%s, %s>\n", name, attr);
+	#endif
+}
+
+
+extern YYSTYPE yylval;
+
+%}
+
+delim                  		[ \t\r\n]
+ws                      	{delim}+
+letter                  	[A-Za-z]
+digit                   	[0-9]
+
+id							{letter}({letter}|{digit})*
+number						{digit}+
+
+%%
+
+	/* ******************** COMMENTS ******************** */
+
+"//"[^\n]*              	{}		/* eat up one-line comments */
+"/*"[^"*/"]*"*/"        	{}		/* eat up multi-line comments */
+
+	/* ******************** WHITESPACES ******************** */
+
+{ws}                    	{}		/* eat up whitespaces */
+
+	/* ******************** PUNCTUATORS ******************** */
+
+","							{ LOG_FL("punctuator", "COMMA");     return pt_comma; }
+";"							{ LOG_FL("punctuator", "SEMICOLON"); return pt_semicolon; }
+
+	/* ******************** KEYWORDS ******************** */
+
+"do"						{ LOG_FL("keyword", "DO");    return kw_do; }
+"else"						{ LOG_FL("keyword", "ELSE");  return kw_else; }
+"false"						{ LOG_FL("keyword", "FALSE"); return kw_false; }
+"for"						{ LOG_FL("keyword", "FOR");   return kw_for; }
+"if"						{ LOG_FL("keyword", "IF");    return kw_if; }
+"int"						{ LOG_FL("keyword", "INT");   return kw_int; }
+"print"						{ LOG_FL("keyword", "PRINT"); return kw_print; }
+"true"						{ LOG_FL("keyword", "TRUE");  return kw_true; }
+"while"						{ LOG_FL("keyword", "WHILE"); return kw_while; }
+
+	/* ******************** BRACKETS ******************** */
+
+"("							{ LOG_FL("bracket", "OPEN ROUND BRACKET");  return br_round_open; }
+")"							{ LOG_FL("bracket", "CLOSE ROUND BRACKET"); return br_round_close; }
+"{"							{ LOG_FL("bracket", "OPEN CURLY BRACKET");  return br_curly_open; }
+"}"							{ LOG_FL("bracket", "CLOSE CURLY BRACKET"); return br_curly_close; }
+
+	/* ******************** ARITHMETIC OPERATORS ******************** */
+
+"*"							{ LOG_FL("operator", "MULTIPLICATION"); return op_mul; }
+"/"							{ LOG_FL("operator", "DIVISION"); return op_div; }
+"%"							{ LOG_FL("operator", "MODULO"); return op_mod; }
+"+"							{ LOG_FL("operator", "ADDITION"); return op_add; }
+"-"							{ LOG_FL("operator", "SUBTRACTION"); return op_sub; }
+
+"++"						{ LOG_FL("operator", "INCREMENT"); return op_inc; }
+"--"						{ LOG_FL("operator", "DECREMENT"); return op_dec; }
+
+"<<"						{ LOG_FL("operator", "SHIFT LEFT"); return op_lsh; }
+">>"						{ LOG_FL("operator", "SHIFT RIGHT"); return op_rsh; }
+
+"~"							{ LOG_FL("operator", "UNARY COMPLEMENT"); return op_inv; }
+
+	/* ******************** ASSIGNMENT OPERATORS ******************** */
+
+"="							{ LOG_FL("operator", "ASSIGNMENT");     return op_assign; }
+
+"*="						{ LOG_FL("operator", "MULTIPLICATION ASSIGNMENT"); return op_mul_assign; }
+"/="						{ LOG_FL("operator", "DIVISION ASSIGNMENT"); return op_div_assign; }
+"%="						{ LOG_FL("operator", "MODULO ASSIGNMENT"); return op_mod_assign; }
+"+="						{ LOG_FL("operator", "ADDITION ASSIGNMENT"); return op_add_assign; }
+"-="						{ LOG_FL("operator", "SUBTRACTION ASSIGNMENT"); return op_sub_assign; }
+
+	/* ******************** RELATIONAL OPERATORS ******************** */
+
+"=="						{ LOG_FL("operator", "EQ"); return op_eq; }
+"!="						{ LOG_FL("operator", "NE"); return op_ne; }
+"<"							{ LOG_FL("operator", "LT"); return op_lt; }
+"<="						{ LOG_FL("operator", "LE"); return op_le; }
+">"							{ LOG_FL("operator", "GT"); return op_gt; }
+">="						{ LOG_FL("operator", "GE"); return op_ge; }
+
+	/* ******************** LOGICAL OPERATORS ******************** */
+
+"and"						{ LOG_FL("operator", "AND"); return op_and; }
+"or"						{ LOG_FL("operator", "OR");  return op_or; }
+"xor"						{ LOG_FL("operator", "XOR"); return op_xor; }
+"not"						{ LOG_FL("operator", "NOT"); return op_not; }
+
+	/* ******************** OTHERS ******************** */
+
+{id}						{
+								LOG_FL("id", yytext);
+
+								yylval.address.addr = strdup(yytext);							
+								return id;
+							}
+
+{number}         			{
+								LOG_FL("int_number", yytext);
+
+								yylval.address.addr = strdup(yytext);
+								return int_number;
+							}
+
+["][^\"]*["]|['][^\']*[']	{
+								LOG_FL("string", yytext);
+
+								/* Allocate heap memory to store the string, and put the pointer in yylval. */
+								yylval.address.addr = (char*) malloc(yyleng - 1);
+								memcpy(yylval.address.addr, yytext + 1, yyleng - 2);
+								yylval.address.addr[yyleng - 2] = 0;
+
+								return string;
+							}
+
+.                       	{ 
+								LOG_FL("unrecognized", yytext);
+							}
+%%
