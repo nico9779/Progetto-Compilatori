@@ -37,7 +37,7 @@ number						{digit}+
 	/* ******************** COMMENTS ******************** */
 
 "//"[^\n]*              	{}		/* eat up one-line comments */
-"/*"[^"*/"]*"*/"        	{}		/* eat up multi-line comments */
+"/*"([^*]|"*"+[^/*])*"*/"	{}		/* eat up multi-line comments */
 
 	/* ******************** WHITESPACES ******************** */
 
