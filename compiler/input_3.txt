@@ -8,6 +8,10 @@ while(x<17){
   }
 }
 
+y = 7 + x;
+int a;
+a = +x - 5;
+
 if(x>3){
    int z;
    z = x++ - 2;
