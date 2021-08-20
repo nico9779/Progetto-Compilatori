@@ -289,12 +289,13 @@ void printSymbolTable()
 
 %left op_or
 %left op_and
-%left op_eq op_ne
-%nonassoc op_lt op_le op_gt op_ge
 
 %left op_btw_or
 %left op_btw_xor
 %left op_btw_and
+
+%left op_eq op_ne
+%nonassoc op_lt op_le op_gt op_ge
 
 %left op_lsh op_rsh
 %left op_add op_sub
