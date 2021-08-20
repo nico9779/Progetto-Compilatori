@@ -234,6 +234,10 @@ void printSymbolTable()
 
 %token op_inv
 
+%token op_btw_and
+%token op_btw_or
+%token op_btw_xor
+
 /* *** ASSIGNMENT OPERATORS *** */
 %token op_assign
 %token op_mul_assign
@@ -260,6 +264,7 @@ void printSymbolTable()
 %token <address> id
 %token <address> int_number
 %token <address> string
+%token unrecognized
 
 
 %type <address> PROGRAM
@@ -278,23 +283,26 @@ void printSymbolTable()
 %type <address> BOOL_EXPR
 
 
-%nonassoc op_inc op_dec
-%right op_uminus op_inv
-%right op_not
-
-%left op_mul op_div op_mod
-%left op_add op_sub
-%left op_lsh op_rsh
-
-%nonassoc op_lt op_le op_gt op_ge
-%left op_eq op_ne
-%left op_and op_or op_xor
-
-%nonassoc op_assign
-%nonassoc op_mul_assign op_div_assign op_mod_assign
 %nonassoc op_add_assign op_sub_assign
+%nonassoc op_mul_assign op_div_assign op_mod_assign
+%nonassoc op_assign
 
+%left op_or
+%left op_and
+%left op_eq op_ne
+%nonassoc op_lt op_le op_gt op_ge
 
+%left op_btw_or
+%left op_btw_xor
+%left op_btw_and
+
+%left op_lsh op_rsh
+%left op_add op_sub
+%left op_mul op_div op_mod
+
+%right op_not
+%right op_uminus op_inv
+%nonassoc op_inc op_dec
 
 %%
 
@@ -801,6 +809,36 @@ INT_EXPR			:	br_round_open INT_EXPR br_round_close		{
 																		free($1.addr);
 																		free($3.addr);
 																	}
+
+					|	INT_EXPR op_btw_and INT_EXPR				{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_btw_and INT_EXPR>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = %s AND %s\n", $$.addr, $1.addr, $3.addr);
+
+																		free($1.addr);
+																		free($3.addr);
+																	}
+																	
+					|	INT_EXPR op_btw_xor INT_EXPR				{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_btw_xor INT_EXPR>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = %s XOR %s\n", $$.addr, $1.addr, $3.addr);
+
+																		free($1.addr);
+																		free($3.addr);
+																	}
+																	
+					|	INT_EXPR op_btw_or INT_EXPR					{
+																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_btw_or INT_EXPR>\n");
+
+																		$$.addr = next_var_name();
+																		printf("\t\t%s = %s OR %s\n", $$.addr, $1.addr, $3.addr);
+
+																		free($1.addr);
+																		free($3.addr);
+																	}
 					;
 
 
@@ -908,16 +946,6 @@ BOOL_EXPR			:	br_round_open BOOL_EXPR br_round_close		{
 
 																		$$.addr = next_var_name();
 																		printf("\t\t%s = %s != %s\n", $$.addr, $1.addr, $3.addr);
-
-																		free($1.addr);
-																		free($3.addr);
-																	}
-
-					|	BOOL_EXPR op_xor BOOL_EXPR					{
-																		LOG_Y("B<BOOL_EXPR: BOOL_EXPR op_xor BOOL_EXPR>\n");
-
-																		$$.addr = next_var_name();
-																		printf("\t\t%s = %s XOR %s\n", $$.addr, $1.addr, $3.addr);
 
 																		free($1.addr);
 																		free($3.addr);

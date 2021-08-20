@@ -83,6 +83,10 @@ number						{digit}+
 
 "~"							{ LOG_FL("operator", "UNARY COMPLEMENT"); return op_inv; }
 
+"&"							{ LOG_FL("operator", "BITWISE AND"); return op_btw_and; }
+"|"							{ LOG_FL("operator", "BITWISE OR"); return op_btw_or; }
+"^"							{ LOG_FL("operator", "BITWISE XOR"); return op_btw_xor; }
+
 	/* ******************** ASSIGNMENT OPERATORS ******************** */
 
 "="							{ LOG_FL("operator", "ASSIGNMENT");     return op_assign; }
@@ -138,5 +142,6 @@ number						{digit}+
 
 .                       	{ 
 								LOG_FL("unrecognized", yytext);
+								return unrecognized;
 							}
 %%
