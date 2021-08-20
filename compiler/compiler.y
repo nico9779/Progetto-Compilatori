@@ -265,6 +265,7 @@ void printSymbolTable()
 %token unrecognized
 
 
+/* *** NON TERMINALS *** */
 %type <address> PROGRAM
 %type <address> BLOCK
 %type <address> STATEMENT_LIST
@@ -281,6 +282,7 @@ void printSymbolTable()
 %type <address> BOOL_EXPR
 
 
+/* *** PRECEDENCE *** */
 %nonassoc op_add_assign op_sub_assign
 %nonassoc op_mul_assign op_div_assign op_mod_assign
 %nonassoc op_assign
