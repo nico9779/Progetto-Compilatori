@@ -50,10 +50,8 @@ number						{digit}+
 
 	/* ******************** KEYWORDS ******************** */
 
-"do"							{ LOG_FL("keyword", "DO");    return kw_do; }
 "else"							{ LOG_FL("keyword", "ELSE");  return kw_else; }
 "false"							{ LOG_FL("keyword", "FALSE"); return kw_false; }
-"for"							{ LOG_FL("keyword", "FOR");   return kw_for; }
 "if"							{ LOG_FL("keyword", "IF");    return kw_if; }
 "int"							{ LOG_FL("keyword", "INT");   return kw_int; }
 "print"							{ LOG_FL("keyword", "PRINT"); return kw_print; }
@@ -126,17 +124,6 @@ number						{digit}+
 
 									yylval.address.addr = strdup(yytext);
 									return int_number;
-								}
-
-["][^\"]*["]|['][^\']*[']		{
-									LOG_FL("string", yytext);
-
-									/* Allocate heap memory to store the string, and put the pointer in yylval. */
-									yylval.address.addr = (char*) malloc(yyleng - 1);
-									memcpy(yylval.address.addr, yytext + 1, yyleng - 2);
-									yylval.address.addr[yyleng - 2] = 0;
-
-									return string;
 								}
 
 .                       		{ 

@@ -206,9 +206,7 @@ void printSymbolTable()
 
 %token kw_int
 
-%token kw_do
 %token kw_else
-%token kw_for
 %token kw_if
 %token kw_while
 
@@ -261,7 +259,6 @@ void printSymbolTable()
 /* *** OTHERS *** */
 %token <address> id
 %token <address> int_number
-%token <address> string
 %token unrecognized
 
 
