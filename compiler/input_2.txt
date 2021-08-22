@@ -1,5 +1,7 @@
 int x = 1, y;
 
+// THIS IS A COMMENT
+
 if(x>1 or y<1 and true){
      int z = 2;
      if(z == 2) x = x+1;

@@ -912,7 +912,7 @@ INT_EXPR			:	br_round_open INT_EXPR br_round_close		{
 																	}
 
 					|	INT_EXPR op_btw_and INT_EXPR				{
-																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_btw_and INT_EXPR>\n");
+																		LOG_Y("B<INT_EXPR: INT_EXPR op_btw_and INT_EXPR>\n");
 
 																		$$.addr = next_var_name();
 																		printf("\t\t%s = %s & %s\n", $$.addr, $1.addr, $3.addr);
@@ -922,7 +922,7 @@ INT_EXPR			:	br_round_open INT_EXPR br_round_close		{
 																	}
 																	
 					|	INT_EXPR op_btw_xor INT_EXPR				{
-																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_btw_xor INT_EXPR>\n");
+																		LOG_Y("B<INT_EXPR: INT_EXPR op_btw_xor INT_EXPR>\n");
 
 																		$$.addr = next_var_name();
 																		printf("\t\t%s = %s ^ %s\n", $$.addr, $1.addr, $3.addr);
@@ -932,7 +932,7 @@ INT_EXPR			:	br_round_open INT_EXPR br_round_close		{
 																	}
 																	
 					|	INT_EXPR op_btw_or INT_EXPR					{
-																		LOG_Y("B<BOOL_EXPR: INT_EXPR op_btw_or INT_EXPR>\n");
+																		LOG_Y("B<INT_EXPR: INT_EXPR op_btw_or INT_EXPR>\n");
 
 																		$$.addr = next_var_name();
 																		printf("\t\t%s = %s | %s\n", $$.addr, $1.addr, $3.addr);
